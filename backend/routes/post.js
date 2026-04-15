@@ -19,18 +19,21 @@ router.get("/", (req, res) => {
   );
 });
 
-// ➕ CREATE POST
+// ➕ CREATE POST (FIXED)
 router.post("/", (req, res) => {
-  const { title, description, userId } = req.body;
+  const { title, description } = req.body;
 
   db.query(
-    "INSERT INTO volunteer_posts (title, description, author_id) VALUES (?, ?, ?)",
-    [title, description, userId],
+    "INSERT INTO volunteer_posts (title, description) VALUES (?, ?)",
+    [title, description],
     (err) => {
       if (err) {
-  console.log("🔥 POST ERROR FULL:", err);
-  return res.status(500).json(err);
-}
+        console.log("🔥 POST ERROR FULL:", err);
+        return res.status(500).json(err);
+      }
+
+      // ✅ RESPONSE ADD (tumhare code me missing tha)
+      res.json({ message: "Post created" });
     }
   );
 });
