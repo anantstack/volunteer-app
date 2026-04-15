@@ -43,3 +43,11 @@ queries.forEach((q) => {
     else console.log("✅ Table created");
   });
 });
+
+db.query(
+  "INSERT INTO app_users (full_name, username, email, password_hash, city) VALUES ('Test User','test','test@test.com','1234','Delhi')",
+  (err) => {
+    if (err) console.log(err);
+    else console.log("✅ User added");
+  }
+);
