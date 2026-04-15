@@ -8,7 +8,7 @@ export default function Profile() {
 
   useEffect(() => {
     API.get("/posts").then(res => {
-      const myPosts = res.data.filter(p => p.user_id === user.id);
+      const myPosts = res.data.filter(p => p.author_id === user.id);
       setPosts(myPosts);
     });
   }, []);
@@ -31,12 +31,7 @@ export default function Profile() {
       <h4>Your Posts</h4>
 
       {posts.map(p => (
-        <div key={p.id} style={{
-          background: "#fff",
-          padding: 10,
-          marginTop: 10,
-          borderRadius: 10
-        }}>
+        <div key={p.id}>
           <h5>{p.title}</h5>
           <p>{p.description}</p>
         </div>

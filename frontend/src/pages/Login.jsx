@@ -14,8 +14,8 @@ export default function Login() {
         password
       });
 
-      
-      localStorage.setItem("user", JSON.stringify(res.data));
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("token", res.data.token);
 
       nav("/feed");
     } catch {
@@ -37,17 +37,7 @@ export default function Login() {
         onChange={e => setPassword(e.target.value)}
       />
 
-      <button
-        style={{
-          background: "#1877f2",
-          color: "#fff",
-          width: "100%",
-          marginTop: 10
-        }}
-        onClick={login}
-      >
-        Login
-      </button>
+      <button onClick={login}>Login</button>
     </div>
   );
 }

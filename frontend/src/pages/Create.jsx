@@ -11,6 +11,10 @@ export default function Create() {
   const submit = async () => {
     const user = JSON.parse(localStorage.getItem("user"));
 
+    if (!title || !description) {
+      return alert("Fill all fields");
+    }
+
     await API.post("/posts", {
       title,
       description,
@@ -27,16 +31,7 @@ export default function Create() {
       <input placeholder="Title" onChange={e => setTitle(e.target.value)} />
       <input placeholder="Description" onChange={e => setDescription(e.target.value)} />
 
-      <button
-        style={{
-          background: "#28a745",
-          color: "#fff",
-          width: "100%"
-        }}
-        onClick={submit}
-      >
-        Post
-      </button>
+      <button onClick={submit}>Post</button>
 
       <Navbar />
     </div>

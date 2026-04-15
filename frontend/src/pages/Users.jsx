@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { io } from "socket.io-client";
 
-const socket = io("https://volunteer-backend-yu6v.onrender.com"); // FIX
+const socket = io("https://volunteer-backend-yu6v.onrender.com");
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -13,12 +13,12 @@ export default function Users() {
   const nav = useNavigate();
   const currentUser = JSON.parse(localStorage.getItem("user"));
 
-  // 🟢 JOIN SOCKET
   useEffect(() => {
-    socket.emit("join", currentUser.id);
+    if (currentUser) {
+      socket.emit("join", currentUser.id);
+    }
   }, []);
 
-  // 👥 GET USERS
   useEffect(() => {
     API.get("/auth/users").then(res => {
       const filtered = res.data.filter(u => u.id !== currentUser.id);
@@ -26,7 +26,6 @@ export default function Users() {
     });
   }, []);
 
-  // 🟢 ONLINE USERS LISTENER
   useEffect(() => {
     socket.on("online_users", (data) => {
       setOnlineUsers(data);
@@ -44,15 +43,7 @@ export default function Users() {
       <h3>Users</h3>
 
       {users.map(u => (
-        <div
-          key={u.id}
-          onClick={() => openChat(u.id)}
-          style={{
-            padding: 15,
-            borderBottom: "1px solid #eee",
-            cursor: "pointer"
-          }}
-        >
+        <div key={u.id} onClick={() => openChat(u.id)}>
           <b>
             {u.full_name} {onlineUsers.includes(u.id) && "🟢"}
           </b>

@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import { io } from "socket.io-client";
 import { useParams } from "react-router-dom";
 
-const socket = io("https://volunteer-backend-yu6v.onrender.com"); // ✅ FIX
+const socket = io("https://volunteer-backend-yu6v.onrender.com");
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
@@ -58,7 +58,6 @@ export default function Chat() {
     };
 
     await API.post("/chat", msg);
-
     socket.emit("send_message", msg);
 
     setText("");
@@ -69,20 +68,12 @@ export default function Chat() {
       <h3>Chat</h3>
 
       {messages.map((m, i) => {
-        const isMe = m.sender_id === user.id;
+        const isMe =
+          m.sender_id === user.id || m.senderId === user.id;
 
         return (
           <div key={i} style={{ textAlign: isMe ? "right" : "left" }}>
-            <span
-              style={{
-                background: isMe ? "#1877f2" : "#e4e6eb",
-                color: isMe ? "#fff" : "#000",
-                padding: 8,
-                borderRadius: 8
-              }}
-            >
-              {m.body}
-            </span>
+            <span>{m.body}</span>
           </div>
         );
       })}
