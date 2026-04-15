@@ -42,20 +42,22 @@ router.post("/login", (req, res) => {
       };
 
       res.json({
-        message: "Login successful",
         token,
-        user: safeUser
+        ...safeUser
       });
     }
   );
 });
 
-// 👥 USERS (FIXED — OUTSIDE LOGIN)
+// 👥 USERS (🔥 OUTSIDE LOGIN)
 router.get("/users", (req, res) => {
-  db.query("SELECT id, full_name, username FROM app_users", (err, result) => {
-    if (err) return res.status(500).json(err);
-    res.json(result);
-  });
+  db.query(
+    "SELECT id, full_name, username FROM app_users",
+    (err, result) => {
+      if (err) return res.status(500).json(err);
+      res.json(result);
+    }
+  );
 });
 
 export default router;

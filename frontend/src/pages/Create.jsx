@@ -6,9 +6,12 @@ import Navbar from "../components/Navbar";
 export default function Create() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false); // 🔥 NEW
   const nav = useNavigate();
 
   const submit = async () => {
+    if (loading) return; // 🔥 prevent multiple clicks
+
     try {
       const user = JSON.parse(localStorage.getItem("user"));
 
@@ -22,21 +25,27 @@ export default function Create() {
         return;
       }
 
+      setLoading(true); // 🔥 start loading
+
       const res = await API.post("/posts", {
         title,
-        description,
-        userId: user.id
+        description
       });
 
       console.log("Post response:", res.data);
 
       alert("Post created");
 
+      setTitle("");
+      setDescription("");
+
       nav("/feed");
 
     } catch (err) {
       console.log("Post error:", err);
       alert("Post failed");
+    } finally {
+      setLoading(false); // 🔥 stop loading
     }
   };
 
@@ -57,14 +66,16 @@ export default function Create() {
       />
 
       <button
+        disabled={loading} // 🔥 disable button
         style={{
           background: "#28a745",
           color: "#fff",
-          width: "100%"
+          width: "100%",
+          opacity: loading ? 0.6 : 1
         }}
         onClick={submit}
       >
-        Post
+        {loading ? "Posting..." : "Post"} {/* 🔥 UI feedback */}
       </button>
 
       <Navbar />
