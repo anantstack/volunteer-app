@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://volunteer-backend-yu6v.onrender.com"); // FIX
 
 export default function Users() {
   const [users, setUsers] = useState([]);

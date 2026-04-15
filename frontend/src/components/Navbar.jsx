@@ -20,7 +20,6 @@ export default function Navbar() {
       <button onClick={() => nav("/feed")}>🏠</button>
       <button onClick={() => nav("/create")}>➕</button>
       <button onClick={() => nav("/profile")}>👤</button>
-      <button onClick={() => nav("/chat")}>💬</button>
       <button onClick={() => nav("/users")}>💬</button>
     </div>
   );

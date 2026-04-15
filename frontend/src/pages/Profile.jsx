@@ -8,7 +8,7 @@ export default function Profile() {
 
   useEffect(() => {
     API.get("/posts").then(res => {
-      const myPosts = res.data.filter(p => p.author_id === user.id);
+      const myPosts = res.data.filter(p => p.user_id === user.id);
       setPosts(myPosts);
     });
   }, []);

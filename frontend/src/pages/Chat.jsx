@@ -4,26 +4,24 @@ import Navbar from "../components/Navbar";
 import { io } from "socket.io-client";
 import { useParams } from "react-router-dom";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://volunteer-backend-yu6v.onrender.com"); // ✅ FIX
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [conversationId, setConversationId] = useState(null);
-  const [typingUser, setTypingUser] = useState("");
 
   const user = JSON.parse(localStorage.getItem("user"));
-
   const { id } = useParams();
   const otherUserId = parseInt(id);
 
-  // 🟢 JOIN SOCKET
   useEffect(() => {
-    socket.emit("join", user.id);
+    if (user) socket.emit("join", user.id);
   }, []);
 
-  // 🔥 CREATE / GET CONVERSATION
   useEffect(() => {
+    if (!user || !otherUserId) return;
+
     API.post("/chat/conversation", {
       user1: user.id,
       user2: otherUserId
@@ -32,7 +30,6 @@ export default function Chat() {
     });
   }, [otherUserId]);
 
-  // 📄 FETCH MESSAGES
   useEffect(() => {
     if (!conversationId) return;
 
@@ -41,7 +38,6 @@ export default function Chat() {
     });
   }, [conversationId]);
 
-  // 💬 REALTIME MESSAGE
   useEffect(() => {
     socket.on("receive_message", (data) => {
       if (data.conversationId === conversationId) {
@@ -52,17 +48,6 @@ export default function Chat() {
     return () => socket.off("receive_message");
   }, [conversationId]);
 
-  // ⌨️ TYPING LISTENER
-  useEffect(() => {
-    socket.on("typing", (data) => {
-      setTypingUser(data.user);
-      setTimeout(() => setTypingUser(""), 2000);
-    });
-
-    return () => socket.off("typing");
-  }, []);
-
-  // 📤 SEND MESSAGE
   const send = async () => {
     if (!text || !conversationId) return;
 
@@ -74,10 +59,7 @@ export default function Chat() {
 
     await API.post("/chat", msg);
 
-    socket.emit("send_message", {
-      ...msg,
-      sender_id: user.id
-    });
+    socket.emit("send_message", msg);
 
     setText("");
   };
@@ -86,47 +68,26 @@ export default function Chat() {
     <div style={{ padding: 10, paddingBottom: 60 }}>
       <h3>Chat</h3>
 
-      <div style={{ minHeight: "300px" }}>
-        {messages.map((m, i) => {
-          const sender = m.sender_id ?? m.senderId;
-          const isMe = sender === user.id;
+      {messages.map((m, i) => {
+        const isMe = m.sender_id === user.id;
 
-          return (
-            <div
-              key={i}
+        return (
+          <div key={i} style={{ textAlign: isMe ? "right" : "left" }}>
+            <span
               style={{
-                textAlign: isMe ? "right" : "left",
-                margin: 5
+                background: isMe ? "#1877f2" : "#e4e6eb",
+                color: isMe ? "#fff" : "#000",
+                padding: 8,
+                borderRadius: 8
               }}
             >
-              <span
-                style={{
-                  background: isMe ? "#1877f2" : "#e4e6eb",
-                  color: isMe ? "#fff" : "#000",
-                  padding: 8,
-                  borderRadius: 8,
-                  display: "inline-block"
-                }}
-              >
-                {m.body}
-              </span>
-            </div>
-          );
-        })}
+              {m.body}
+            </span>
+          </div>
+        );
+      })}
 
-        {/* ⌨️ Typing UI */}
-        {typingUser && <p>{typingUser} is typing...</p>}
-      </div>
-
-      <input
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value);
-          socket.emit("typing", { user: user.username });
-        }}
-        placeholder="Type message"
-      />
-
+      <input value={text} onChange={e => setText(e.target.value)} />
       <button onClick={send}>Send</button>
 
       <Navbar />

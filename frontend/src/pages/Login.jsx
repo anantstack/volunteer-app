@@ -14,8 +14,8 @@ export default function Login() {
         password
       });
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      
+      localStorage.setItem("user", JSON.stringify(res.data));
 
       nav("/feed");
     } catch {
