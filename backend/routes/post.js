@@ -27,8 +27,10 @@ router.post("/", (req, res) => {
     "INSERT INTO volunteer_posts (title, description, author_id) VALUES (?, ?, ?)",
     [title, description, userId],
     (err) => {
-      if (err) return res.status(500).json(err);
-      res.json({ message: "Post created" });
+      if (err) {
+  console.log("🔥 POST ERROR FULL:", err);
+  return res.status(500).json(err);
+}
     }
   );
 });
