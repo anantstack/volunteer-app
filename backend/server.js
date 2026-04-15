@@ -9,6 +9,9 @@ import chatRoutes from "./routes/chat.js";
 import "./config/db.js";
 import dotenv from "dotenv";
 
+
+import "./initDB.js";
+
 dotenv.config();
 
 const app = express();
