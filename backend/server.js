@@ -10,7 +10,7 @@ import "./config/db.js";
 import dotenv from "dotenv";
 
 
-import "./initDB.js";
+
 
 dotenv.config();
 

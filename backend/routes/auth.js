@@ -33,22 +33,24 @@ router.post("/login", (req, res) => {
         { expiresIn: "1d" }
       );
 
+      const safeUser = {
+        id: user.id,
+        full_name: user.full_name,
+        username: user.username,
+        email: user.email,
+        city: user.city
+      };
+
       res.json({
         message: "Login successful",
         token,
-        user: {
-          id: user.id,
-          full_name: user.full_name,
-          username: user.username,
-          email: user.email,
-          city: user.city
-        }
+        user: safeUser
       });
     }
   );
 });
 
-// ✅ FIXED (outside login)
+// 👥 USERS (FIXED — OUTSIDE LOGIN)
 router.get("/users", (req, res) => {
   db.query("SELECT id, full_name, username FROM app_users", (err, result) => {
     if (err) return res.status(500).json(err);

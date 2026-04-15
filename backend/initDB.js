@@ -36,6 +36,13 @@ const queries = [
     user_id INT
   )`,
 
+  `CREATE TABLE IF NOT EXISTS volunteer_posts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255),
+  description TEXT,
+  author_id INT
+  )`,
+
   `CREATE TABLE IF NOT EXISTS messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     conversation_id INT,
