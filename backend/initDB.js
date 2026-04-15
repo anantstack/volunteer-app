@@ -1,16 +1,19 @@
 import db from "./config/db.js";
 
 const queries = [
+
   `CREATE TABLE IF NOT EXISTS volunteer_posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255),
-    description TEXT
+    description TEXT,
+    author_id INT
   )`,
 
   `CREATE TABLE IF NOT EXISTS likes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     post_id INT,
-    user_id INT
+    user_id INT,
+    UNIQUE(post_id, user_id)
   )`,
 
   `CREATE TABLE IF NOT EXISTS app_users (
@@ -23,9 +26,14 @@ const queries = [
   )`,
 
   `CREATE TABLE IF NOT EXISTS conversations (
+    id INT AUTO_INCREMENT PRIMARY KEY
+  )`,
+
+  // 🔥 FIX (missing table)
+  `CREATE TABLE IF NOT EXISTS conversation_members (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user1 INT,
-    user2 INT
+    conversation_id INT,
+    user_id INT
   )`,
 
   `CREATE TABLE IF NOT EXISTS messages (
@@ -40,14 +48,6 @@ const queries = [
 queries.forEach((q) => {
   db.query(q, (err) => {
     if (err) console.log("❌ Error:", err);
-    else console.log("✅ Table created");
+    else console.log("✅ Table ready");
   });
 });
-
-db.query(
-  "INSERT INTO app_users (full_name, username, email, password_hash, city) VALUES ('Test User','test','test@test.com','1234','Delhi')",
-  (err) => {
-    if (err) console.log(err);
-    else console.log("✅ User added");
-  }
-);

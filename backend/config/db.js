@@ -6,14 +6,17 @@ dotenv.config();
 let db;
 
 if (process.env.DATABASE_URL) {
-  // 🔥 Production (Railway via Render)
-  db = mysql.createConnection(process.env.DATABASE_URL);
+  db = mysql.createConnection({
+    uri: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
 } else {
-  // 🧑‍💻 Local fallback (optional)
   db = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "Baba1212@", // apna local password
+    password: "Baba1212@",
     database: "volunteer",
     port: 3306
   });
@@ -21,7 +24,7 @@ if (process.env.DATABASE_URL) {
 
 db.connect((err) => {
   if (err) {
-    console.log("❌ DB Error FULL:", err); // 🔥 full error print
+    console.log("❌ DB Error:", err);
   } else {
     console.log("✅ MySQL Connected");
   }

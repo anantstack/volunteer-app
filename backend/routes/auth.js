@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
-// 🔐 LOGIN API
+// 🔐 LOGIN
 router.post("/login", (req, res) => {
   const { username, password } = req.body;
 
@@ -21,43 +21,39 @@ router.post("/login", (req, res) => {
 
       const user = results[0];
 
-      // ✅ password check
       const isMatch = await bcrypt.compare(password, user.password_hash);
 
       if (!isMatch) {
         return res.status(400).json({ error: "Wrong password" });
       }
 
-      // ✅ create token (YOU MISSED THIS)
       const token = jwt.sign(
         { id: user.id },
         process.env.JWT_SECRET || "secret",
         { expiresIn: "1d" }
       );
 
-      // ✅ safe user (no password)
-      const safeUser = {
-        id: user.id,
-        full_name: user.full_name,
-        username: user.username,
-        email: user.email,
-        city: user.city
-      };
-
       res.json({
         message: "Login successful",
         token,
-        user: safeUser
+        user: {
+          id: user.id,
+          full_name: user.full_name,
+          username: user.username,
+          email: user.email,
+          city: user.city
+        }
       });
-      // 👥 GET ALL USERS
+    }
+  );
+});
+
+// ✅ FIXED (outside login)
 router.get("/users", (req, res) => {
   db.query("SELECT id, full_name, username FROM app_users", (err, result) => {
     if (err) return res.status(500).json(err);
     res.json(result);
   });
-});
-    }
-  );
 });
 
 export default router;
