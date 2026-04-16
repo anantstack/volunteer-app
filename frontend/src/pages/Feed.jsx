@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API } from "../api";
 import Navbar from "../components/Navbar";
+import Topbar from "../components/Topbar";
 
 export default function Feed() {
   const [posts, setPosts] = useState([]);
@@ -9,7 +10,9 @@ export default function Feed() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const fetchPosts = () => {
-    API.get("/posts").then(res => setPosts(res.data));
+    API.get("/posts")
+      .then(res => setPosts(res.data))
+      .catch(err => console.log("Feed error:", err));
   };
 
   useEffect(() => {
@@ -17,10 +20,7 @@ export default function Feed() {
   }, []);
 
   const likePost = async (postId) => {
-    if (!user) {
-      alert("Login required");
-      return;
-    }
+    if (!user) return alert("Login required");
 
     if (loadingLike[postId]) return;
 
@@ -33,61 +33,53 @@ export default function Feed() {
       });
 
       fetchPosts();
-    } catch (err) {
-      console.log(err);
     } finally {
       setLoadingLike(prev => ({ ...prev, [postId]: false }));
     }
   };
 
   return (
-    <div style={{ padding: 10, paddingBottom: 60 }}>
-      <h3>Feed</h3>
+    <div style={{ paddingBottom: 60 }}>
+      
+      <Topbar /> {/* 🔥 NEW */}
 
-      {posts.map(p => (
-        <div
-          key={p.id}
-          style={{
-            background: "#fff",
-            padding: 15,
-            marginBottom: 12,
-            borderRadius: 12,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-          }}
-        >
-          {/* 👤 USER */}
-          <div style={{ fontWeight: "bold", marginBottom: 5 }}>
-            {p.full_name || "Unknown"} (@{p.username})
-          </div>
+      <div style={{ padding: 10 }}>
+        <h3>Feed</h3>
 
-          {/* 📄 POST */}
-          <h4>{p.title}</h4>
-          <p style={{ color: "#555" }}>{p.description}</p>
-
-          {/* ❤️ LIKE BUTTON */}
-          <button
-            disabled={loadingLike[p.id]}
+        {posts.map(p => (
+          <div
+            key={p.id}
             style={{
-              background: "#ff4d4f",
-              color: "#fff",
-              border: "none",
-              padding: "6px 12px",
-              borderRadius: 8,
-              marginTop: 10,
-              cursor: "pointer",
-              opacity: loadingLike[p.id] ? 0.6 : 1
+              background: "#fff",
+              padding: 15,
+              marginBottom: 12,
+              borderRadius: 12,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
             }}
-            onClick={() => likePost(p.id)}
           >
-            {loadingLike[p.id] ? "..." : `❤️ ${p.likes || 0}`}
-          </button>
+            <div style={{ fontWeight: "bold" }}>
+              {p.full_name} (@{p.username})
+            </div>
 
-          {/* 💬 COMMENT + SHARE UI */}
-          <div style={{ marginTop: 10, fontSize: 14, color: "#777" }}>
-            💬 Comment &nbsp;&nbsp; 🔗 Share
+            <h4>{p.title}</h4>
+            <p>{p.description}</p>
+
+            <button
+              onClick={() => likePost(p.id)}
+              disabled={loadingLike[p.id]}
+              style={{
+                background: "#ff4d4f",
+                color: "#fff",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: 8
+              }}
+            >
+              ❤️ {p.likes}
+            </button>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       <Navbar />
     </div>

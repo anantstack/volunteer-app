@@ -17,10 +17,14 @@ export default function Navbar() {
         borderTop: "1px solid #ddd"
       }}
     >
+      {/* 🏠 HOME */}
       <button onClick={() => nav("/feed")}>🏠</button>
+
+      {/* ➕ CREATE */}
       <button onClick={() => nav("/create")}>➕</button>
-      <button onClick={() => nav("/profile")}>👤</button>
-      <button onClick={() => nav("/users")}>💬</button>
+
+      {/* 💬 CHAT */}
+      <button onClick={() => nav("/chat")}>💬</button>
     </div>
   );
 }
