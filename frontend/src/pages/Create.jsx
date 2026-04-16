@@ -6,16 +6,18 @@ import Navbar from "../components/Navbar";
 export default function Create() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [loading, setLoading] = useState(false); // 🔥 NEW
+  const [loading, setLoading] = useState(false);
+
   const nav = useNavigate();
 
   const submit = async () => {
-    if (loading) return; // 🔥 prevent multiple clicks
+    if (loading) return;
 
     try {
       const user = JSON.parse(localStorage.getItem("user"));
 
-      if (!user) {
+      // 🔥 SAFE CHECK (IMPORTANT)
+      if (!user || !user.id) {
         alert("Login required");
         return;
       }
@@ -25,11 +27,12 @@ export default function Create() {
         return;
       }
 
-      setLoading(true); // 🔥 start loading
+      setLoading(true);
 
       const res = await API.post("/posts", {
         title,
-        description
+        description,
+        userId: user.id // ✅ FIX (MOST IMPORTANT)
       });
 
       console.log("Post response:", res.data);
@@ -45,7 +48,7 @@ export default function Create() {
       console.log("Post error:", err);
       alert("Post failed");
     } finally {
-      setLoading(false); // 🔥 stop loading
+      setLoading(false);
     }
   };
 
@@ -66,16 +69,17 @@ export default function Create() {
       />
 
       <button
-        disabled={loading} // 🔥 disable button
+        disabled={loading}
         style={{
           background: "#28a745",
           color: "#fff",
           width: "100%",
-          opacity: loading ? 0.6 : 1
+          opacity: loading ? 0.6 : 1,
+          cursor: loading ? "not-allowed" : "pointer"
         }}
         onClick={submit}
       >
-        {loading ? "Posting..." : "Post"} {/* 🔥 UI feedback */}
+        {loading ? "Posting..." : "Post"}
       </button>
 
       <Navbar />

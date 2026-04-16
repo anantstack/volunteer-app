@@ -14,12 +14,12 @@ export default function Login() {
         password
       });
 
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      // ✅ FIX — पूरा response store करो
+      localStorage.setItem("user", JSON.stringify(res.data));
 
       nav("/feed");
-    } catch {
+    } catch (err) {
+      console.log("Login error:", err);
       alert("Login failed");
     }
   };
@@ -30,7 +30,10 @@ export default function Login() {
         Volunteer App
       </h2>
 
-      <input placeholder="Username" onChange={e => setUsername(e.target.value)} />
+      <input
+        placeholder="Username"
+        onChange={e => setUsername(e.target.value)}
+      />
 
       <input
         type="password"
@@ -38,7 +41,17 @@ export default function Login() {
         onChange={e => setPassword(e.target.value)}
       />
 
-      <button onClick={login}>Login</button>
+      <button
+        style={{
+          marginTop: 10,
+          width: "100%",
+          background: "#1877f2",
+          color: "#fff"
+        }}
+        onClick={login}
+      >
+        Login
+      </button>
     </div>
   );
 }

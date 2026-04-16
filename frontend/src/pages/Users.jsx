@@ -11,19 +11,32 @@ export default function Users() {
   const [onlineUsers, setOnlineUsers] = useState([]);
 
   const nav = useNavigate();
-  const currentUser = JSON.parse(localStorage.getItem("user"));
+
+  // ✅ SAFE USER
+  let currentUser = null;
+  try {
+    const storedUser = localStorage.getItem("user");
+    currentUser = storedUser ? JSON.parse(storedUser) : null;
+  } catch {
+    currentUser = null;
+  }
+
+  // ❌ अगर login नहीं
+  if (!currentUser) {
+    return <h3>Please login first</h3>;
+  }
 
   useEffect(() => {
-    if (currentUser) {
-      socket.emit("join", currentUser.id);
-    }
+    socket.emit("join", currentUser.id);
   }, []);
 
   useEffect(() => {
-    API.get("/auth/users").then(res => {
-      const filtered = res.data.filter(u => u.id !== currentUser.id);
-      setUsers(filtered);
-    });
+    API.get("/auth/users")
+      .then(res => {
+        const filtered = res.data.filter(u => u.id !== currentUser.id);
+        setUsers(filtered);
+      })
+      .catch(err => console.log("Users error:", err));
   }, []);
 
   useEffect(() => {
@@ -43,7 +56,15 @@ export default function Users() {
       <h3>Users</h3>
 
       {users.map(u => (
-        <div key={u.id} onClick={() => openChat(u.id)}>
+        <div
+          key={u.id}
+          onClick={() => openChat(u.id)}
+          style={{
+            padding: 15,
+            borderBottom: "1px solid #eee",
+            cursor: "pointer"
+          }}
+        >
           <b>
             {u.full_name} {onlineUsers.includes(u.id) && "🟢"}
           </b>

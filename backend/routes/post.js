@@ -3,57 +3,82 @@ import db from "../config/db.js";
 
 const router = express.Router();
 
-// 📄 GET POSTS
+// 📄 GET POSTS (with author + correct likes)
 router.get("/", (req, res) => {
   db.query(
     `
-    SELECT p.*, COUNT(l.id) AS likes
+    SELECT 
+      p.*,
+      u.full_name,
+      u.username,
+      (
+        SELECT COUNT(DISTINCT l.user_id)
+        FROM likes l
+        WHERE l.post_id = p.id
+      ) AS likes
     FROM volunteer_posts p
-    LEFT JOIN likes l ON p.id = l.post_id
-    GROUP BY p.id
+    LEFT JOIN app_users u ON p.author_id = u.id
+    ORDER BY p.id DESC
     `,
     (err, result) => {
-      if (err) return res.status(500).json(err);
+      if (err) {
+        console.log("GET POSTS ERROR:", err);
+        return res.status(500).json(err);
+      }
       res.json(result);
     }
   );
 });
 
-// ➕ CREATE POST (FIXED)
+// ➕ CREATE POST (with author_id)
 router.post("/", (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, userId } = req.body;
 
   db.query(
-    "INSERT INTO volunteer_posts (title, description) VALUES (?, ?)",
-    [title, description],
+    "INSERT INTO volunteer_posts (title, description, author_id) VALUES (?, ?, ?)",
+    [title, description, userId],
     (err) => {
       if (err) {
-        console.log("🔥 POST ERROR FULL:", err);
+        console.log("POST ERROR:", err);
         return res.status(500).json(err);
       }
-
-      // ✅ RESPONSE ADD (tumhare code me missing tha)
       res.json({ message: "Post created" });
     }
   );
 });
 
-// ❤️ LIKE POST
+// ❤️ LIKE / UNLIKE TOGGLE (🔥 FINAL FIX)
 router.post("/like", (req, res) => {
   const { postId, userId } = req.body;
 
+  // check already liked
   db.query(
-    "INSERT INTO likes (post_id, user_id) VALUES (?, ?)",
+    "SELECT * FROM likes WHERE post_id=? AND user_id=?",
     [postId, userId],
-    (err) => {
-      if (err) {
-        if (err.code === "ER_DUP_ENTRY") {
-          return res.json({ message: "Already liked" });
-        }
-        return res.status(500).json(err);
-      }
+    (err, result) => {
+      if (err) return res.status(500).json(err);
 
-      res.json({ message: "Liked" });
+      if (result.length > 0) {
+        // ❌ already liked → UNLIKE
+        db.query(
+          "DELETE FROM likes WHERE post_id=? AND user_id=?",
+          [postId, userId],
+          (err) => {
+            if (err) return res.status(500).json(err);
+            return res.json({ message: "Unliked" });
+          }
+        );
+      } else {
+        // ✅ LIKE
+        db.query(
+          "INSERT INTO likes (post_id, user_id) VALUES (?, ?)",
+          [postId, userId],
+          (err) => {
+            if (err) return res.status(500).json(err);
+            return res.json({ message: "Liked" });
+          }
+        );
+      }
     }
   );
 });

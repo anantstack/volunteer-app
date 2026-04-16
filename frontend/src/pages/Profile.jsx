@@ -3,14 +3,29 @@ import { API } from "../api";
 import Navbar from "../components/Navbar";
 
 export default function Profile() {
-  const user = JSON.parse(localStorage.getItem("user"));
   const [posts, setPosts] = useState([]);
 
+  // ✅ SAFE USER
+  let user = null;
+  try {
+    const storedUser = localStorage.getItem("user");
+    user = storedUser ? JSON.parse(storedUser) : null;
+  } catch {
+    user = null;
+  }
+
+  // ❌ अगर login नहीं
+  if (!user) {
+    return <h3>Please login first</h3>;
+  }
+
   useEffect(() => {
-    API.get("/posts").then(res => {
-      const myPosts = res.data.filter(p => p.author_id === user.id);
-      setPosts(myPosts);
-    });
+    API.get("/posts")
+      .then(res => {
+        const myPosts = res.data.filter(p => p.author_id === user.id);
+        setPosts(myPosts);
+      })
+      .catch(err => console.log("Profile error:", err));
   }, []);
 
   const logout = () => {
@@ -31,7 +46,12 @@ export default function Profile() {
       <h4>Your Posts</h4>
 
       {posts.map(p => (
-        <div key={p.id}>
+        <div key={p.id} style={{
+          background: "#fff",
+          padding: 10,
+          marginTop: 10,
+          borderRadius: 10
+        }}>
           <h5>{p.title}</h5>
           <p>{p.description}</p>
         </div>
