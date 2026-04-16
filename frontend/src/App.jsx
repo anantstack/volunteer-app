@@ -21,6 +21,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route path="/search" element={<Search />} />
           <Route path="/feed" element={<Feed />} />
           <Route path="/create" element={<Create />} />
           <Route path="/profile" element={<Profile />} />

@@ -9,7 +9,6 @@ const socket = io("https://volunteer-backend-yu6v.onrender.com");
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
-
   const nav = useNavigate();
 
   // ✅ SAFE USER
@@ -21,9 +20,8 @@ export default function Users() {
     currentUser = null;
   }
 
-  // ❌ अगर login नहीं
   if (!currentUser) {
-    return <h3>Please login first</h3>;
+    return <h3 style={{ padding: 20 }}>Please login first</h3>;
   }
 
   useEffect(() => {
@@ -52,23 +50,44 @@ export default function Users() {
   };
 
   return (
-    <div style={{ padding: 10, paddingBottom: 60 }}>
-      <h3>Users</h3>
+    <div style={{ padding: 10, paddingBottom: 60, maxWidth: 500, margin: "auto" }}>
+      
+      {/* 🔝 HEADER */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 15
+      }}>
+        <h3>Users</h3>
 
+        <div style={{ display: "flex", gap: 10 }}>
+          {/* 🔍 SEARCH */}
+          <button onClick={() => nav("/search")}>🔍</button>
+
+          {/* ⬅ BACK */}
+          <button onClick={() => nav("/feed")}>⬅</button>
+        </div>
+      </div>
+
+      {/* 👥 USERS LIST */}
       {users.map(u => (
         <div
           key={u.id}
           onClick={() => openChat(u.id)}
           style={{
+            background: "#fff",
             padding: 15,
-            borderBottom: "1px solid #eee",
+            marginBottom: 10,
+            borderRadius: 10,
+            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
             cursor: "pointer"
           }}
         >
-          <b>
+          <div style={{ fontWeight: "bold" }}>
             {u.full_name} {onlineUsers.includes(u.id) && "🟢"}
-          </b>
-          <p>@{u.username}</p>
+          </div>
+          <div style={{ color: "#777" }}>@{u.username}</div>
         </div>
       ))}
 

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { API } from "../api";
 import Navbar from "../components/Navbar";
-import Topbar from "../components/Topbar";
+import { useNavigate } from "react-router-dom";
 
 export default function Feed() {
   const [posts, setPosts] = useState([]);
   const [loadingLike, setLoadingLike] = useState({});
+  const nav = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -20,7 +21,10 @@ export default function Feed() {
   }, []);
 
   const likePost = async (postId) => {
-    if (!user) return alert("Login required");
+    if (!user) {
+      alert("Login required");
+      return;
+    }
 
     if (loadingLike[postId]) return;
 
@@ -33,53 +37,73 @@ export default function Feed() {
       });
 
       fetchPosts();
+    } catch (err) {
+      console.log(err);
     } finally {
       setLoadingLike(prev => ({ ...prev, [postId]: false }));
     }
   };
 
   return (
-    <div style={{ paddingBottom: 60 }}>
-      
-      <Topbar /> {/* 🔥 NEW */}
+    <div style={{ padding: 10, paddingBottom: 60, maxWidth: 500, margin: "auto" }}>
 
-      <div style={{ padding: 10 }}>
+      {/* 🔥 HEADER */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 15
+      }}>
         <h3>Feed</h3>
 
-        {posts.map(p => (
-          <div
-            key={p.id}
-            style={{
-              background: "#fff",
-              padding: 15,
-              marginBottom: 12,
-              borderRadius: 12,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-            }}
-          >
-            <div style={{ fontWeight: "bold" }}>
-              {p.full_name} (@{p.username})
-            </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          {/* 🔍 SEARCH */}
+          <button onClick={() => nav("/search")}>
+            🔍
+          </button>
 
-            <h4>{p.title}</h4>
-            <p>{p.description}</p>
-
-            <button
-              onClick={() => likePost(p.id)}
-              disabled={loadingLike[p.id]}
-              style={{
-                background: "#ff4d4f",
-                color: "#fff",
-                border: "none",
-                padding: "6px 12px",
-                borderRadius: 8
-              }}
-            >
-              ❤️ {p.likes}
-            </button>
-          </div>
-        ))}
+          {/* 👥 USERS */}
+          <button onClick={() => nav("/users")}>
+            👥
+          </button>
+        </div>
       </div>
+
+      {/* 📄 POSTS */}
+      {posts.map(p => (
+        <div
+          key={p.id}
+          style={{
+            background: "#fff",
+            padding: 15,
+            marginBottom: 12,
+            borderRadius: 12,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+          }}
+        >
+          <div style={{ fontWeight: "bold", marginBottom: 5 }}>
+            {p.full_name} (@{p.username})
+          </div>
+
+          <h4>{p.title}</h4>
+          <p style={{ color: "#555" }}>{p.description}</p>
+
+          <button
+            disabled={loadingLike[p.id]}
+            style={{
+              background: "#ff4d4f",
+              color: "#fff",
+              border: "none",
+              padding: "6px 12px",
+              borderRadius: 8,
+              marginTop: 10
+            }}
+            onClick={() => likePost(p.id)}
+          >
+            {loadingLike[p.id] ? "..." : `❤️ ${p.likes || 0}`}
+          </button>
+        </div>
+      ))}
 
       <Navbar />
     </div>
