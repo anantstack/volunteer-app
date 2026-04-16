@@ -3,12 +3,15 @@ import db from "../config/db.js";
 
 const router = express.Router();
 
-// 📄 GET POSTS (with author + correct likes)
+// 📄 GET POSTS (WITH USER)
 router.get("/", (req, res) => {
   db.query(
     `
     SELECT 
-      p.*,
+      p.id,
+      p.title,
+      p.description,
+      p.author_id,
       u.full_name,
       u.username,
       (
@@ -30,7 +33,7 @@ router.get("/", (req, res) => {
   );
 });
 
-// ➕ CREATE POST (with author_id)
+// ➕ CREATE POST (WITH USER)
 router.post("/", (req, res) => {
   const { title, description, userId } = req.body;
 
@@ -42,43 +45,30 @@ router.post("/", (req, res) => {
         console.log("POST ERROR:", err);
         return res.status(500).json(err);
       }
+
       res.json({ message: "Post created" });
     }
   );
 });
 
-// ❤️ LIKE / UNLIKE TOGGLE (🔥 FINAL FIX)
+// ❤️ LIKE POST (SAFE)
 router.post("/like", (req, res) => {
   const { postId, userId } = req.body;
 
-  // check already liked
   db.query(
-    "SELECT * FROM likes WHERE post_id=? AND user_id=?",
+    "INSERT INTO likes (post_id, user_id) VALUES (?, ?)",
     [postId, userId],
-    (err, result) => {
-      if (err) return res.status(500).json(err);
+    (err) => {
+      if (err) {
+        if (err.code === "ER_DUP_ENTRY") {
+          return res.json({ message: "Already liked" });
+        }
 
-      if (result.length > 0) {
-        // ❌ already liked → UNLIKE
-        db.query(
-          "DELETE FROM likes WHERE post_id=? AND user_id=?",
-          [postId, userId],
-          (err) => {
-            if (err) return res.status(500).json(err);
-            return res.json({ message: "Unliked" });
-          }
-        );
-      } else {
-        // ✅ LIKE
-        db.query(
-          "INSERT INTO likes (post_id, user_id) VALUES (?, ?)",
-          [postId, userId],
-          (err) => {
-            if (err) return res.status(500).json(err);
-            return res.json({ message: "Liked" });
-          }
-        );
+        console.log("LIKE ERROR:", err);
+        return res.status(500).json(err);
       }
+
+      res.json({ message: "Liked" });
     }
   );
 });
