@@ -94,11 +94,11 @@ export default function Feed() {
 
     {/* 🖼 IMAGE */}
     {p.image && (
-      <img
-        src={p.image}
-        style={{ width: "100%", borderRadius: 10, marginTop: 10 }}
-      />
-    )}
+  <img
+    src={`https://volunteer-backend-yu6v.onrender.com/uploads/${p.image}`}
+    style={{ width: "100%", borderRadius: 10 }}
+  />
+)}
 
     <button
       disabled={loadingLike[p.id]}

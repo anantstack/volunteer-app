@@ -3,18 +3,11 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-console.log("👉 DATABASE_URL:", process.env.DATABASE_URL);
-
-const db = mysql.createConnection(process.env.DATABASE_URL);
-
-
-
-db.connect((err) => {
-  if (err) {
-    console.log("❌ DB Error:", err);
-  } else {
-    console.log("✅ MySQL Connected (Railway)");
-  }
+const db = mysql.createPool({
+  uri: process.env.DATABASE_URL,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 export default db;
