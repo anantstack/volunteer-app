@@ -3,38 +3,46 @@ import { API } from "../api";
 import Navbar from "../components/Navbar";
 
 export default function Friends() {
-  const [users, setUsers] = useState([]);
+  const [requests, setRequests] = useState([]);
 
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const load = () => {
+    API.get("/friends/requests/" + user.id)
+      .then(res => setRequests(res.data));
+  };
 
   useEffect(() => {
-    API.get("/auth/users").then(res => {
-      const filtered = res.data.filter(u => u.id !== user.id);
-      setUsers(filtered);
-    });
+    load();
   }, []);
 
-  const sendRequest = async (id) => {
-    await API.post("/friends/send", {
-      senderId: user.id,
-      receiverId: id
-    });
+  const accept = async (id) => {
+    await API.post("/friends/accept", { id });
+    load();
+  };
 
-    alert("Request sent");
+  const reject = async (id) => {
+    await API.post("/friends/reject", { id });
+    load();
   };
 
   return (
-    <div style={{ padding: 10, paddingBottom: 60 }}>
-      <h3>Add Friends</h3>
+    <div style={{ padding: 20, paddingBottom: 60 }}>
+      <h3>Friend Requests</h3>
 
-      {users.map(u => (
-        <div key={u.id}>
-          <b>{u.full_name}</b>
-          <p>@{u.username}</p>
+      {requests.map(r => (
+        <div key={r.id} style={{
+          background: "#fff",
+          padding: 10,
+          marginBottom: 10,
+          borderRadius: 10
+        }}>
+          <b>{r.full_name}</b> (@{r.username})
 
-          <button onClick={() => sendRequest(u.id)}>
-            Add Friend
-          </button>
+          <div style={{ marginTop: 5 }}>
+            <button onClick={() => accept(r.id)}>✅ Accept</button>
+            <button onClick={() => reject(r.id)}>❌ Reject</button>
+          </div>
         </div>
       ))}
 

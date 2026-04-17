@@ -2,6 +2,14 @@ import { useNavigate } from "react-router-dom";
 
 export default function Navbar() {
   const nav = useNavigate();
+  const [count, setCount] = useState(0);
+
+useEffect(() => {
+  API.get("/notifications/unread").then(res => {
+    setCount(res.data.count || 0);
+  });
+}, []);
+  
 
   return (
     <div
@@ -16,7 +24,26 @@ export default function Navbar() {
         background: "#fff",
         borderTop: "1px solid #ddd"
       }}
+      
     >
+      <div style={{ position: "relative" }}>
+  <button onClick={() => nav("/chat")}>💬</button>
+
+  {count > 0 && (
+    <span style={{
+      position: "absolute",
+      top: -5,
+      right: -5,
+      background: "red",
+      color: "#fff",
+      borderRadius: "50%",
+      padding: "2px 6px",
+      fontSize: 10
+    }}>
+      {count}
+    </span>
+  )}
+</div>
       {/* 🏠 HOME */}
       <button onClick={() => nav("/feed")}>🏠</button>
 
@@ -24,7 +51,10 @@ export default function Navbar() {
       <button onClick={() => nav("/create")}>➕</button>
 
       {/* 💬 CHAT */}
+      
       <button onClick={() => nav("/chat")}>💬</button>
+      <button onClick={() => nav("/friends")}>👥</button>
+      <button onClick={() => nav("/notifications")}>🔔</button>
     </div>
   );
 }

@@ -3,8 +3,8 @@ import db from "../config/db.js";
 
 const router = express.Router();
 
-// 👉 SEND REQUEST
-router.post("/request", (req, res) => {
+// ➕ SEND REQUEST
+router.post("/send", (req, res) => {
   const { fromUser, toUser } = req.body;
 
   db.query(
@@ -12,44 +12,51 @@ router.post("/request", (req, res) => {
     [fromUser, toUser],
     (err) => {
       if (err) return res.status(500).json(err);
+
+      // 🔔 notification
+      db.query(
+        "INSERT INTO notifications (user_id, text) VALUES (?, ?)",
+        [toUser, "New friend request"],
+      );
+
       res.json({ message: "Request sent" });
     }
   );
 });
 
-// 👉 ACCEPT REQUEST
+// ✅ ACCEPT
 router.post("/accept", (req, res) => {
-  const { requestId } = req.body;
+  const { id } = req.body;
 
   db.query(
     "UPDATE friends SET status='accepted' WHERE id=?",
-    [requestId],
-    (err) => {
-      if (err) return res.status(500).json(err);
-      res.json({ message: "Accepted" });
-    }
+    [id],
+    () => res.json({ message: "Accepted" })
   );
 });
 
-// 👉 GET FRIENDS
-router.get("/:userId", (req, res) => {
-  const { userId } = req.params;
+// ❌ REJECT
+router.post("/reject", (req, res) => {
+  const { id } = req.body;
 
   db.query(
+    "DELETE FROM friends WHERE id=?",
+    [id],
+    () => res.json({ message: "Rejected" })
+  );
+});
+
+// 📄 GET REQUESTS
+router.get("/requests/:userId", (req, res) => {
+  db.query(
     `
-    SELECT u.id, u.full_name, u.username
+    SELECT f.id, u.full_name, u.username
     FROM friends f
-    JOIN app_users u 
-      ON (u.id = f.from_user OR u.id = f.to_user)
-    WHERE (f.from_user = ? OR f.to_user = ?) 
-      AND f.status='accepted'
-      AND u.id != ?
+    JOIN app_users u ON f.from_user = u.id
+    WHERE f.to_user=? AND f.status='pending'
     `,
-    [userId, userId, userId],
-    (err, result) => {
-      if (err) return res.status(500).json(err);
-      res.json(result);
-    }
+    [req.params.userId],
+    (err, result) => res.json(result)
   );
 });
 
