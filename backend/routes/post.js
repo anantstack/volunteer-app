@@ -1,9 +1,25 @@
 import express from "express";
 import db from "../config/db.js";
+import multer from "multer";
+import path from "path";
 
 const router = express.Router();
 
-// 📄 GET POSTS (WITH USER)
+
+// 📁 MULTER CONFIG
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
+
+
+// 📄 GET POSTS (UPDATED)
 router.get("/", (req, res) => {
   db.query(
     `
@@ -11,6 +27,9 @@ router.get("/", (req, res) => {
       p.id,
       p.title,
       p.description,
+      p.image,
+      p.date,
+      p.venue,
       p.author_id,
       u.full_name,
       u.username,
@@ -33,42 +52,61 @@ router.get("/", (req, res) => {
   );
 });
 
-// ➕ CREATE POST (WITH USER)
-router.post("/", (req, res) => {
-  const { title, description, image } = req.body;
 
-db.query(
-  "INSERT INTO volunteer_posts (title, description, image, author_id) VALUES (?, ?, ?, ?)",
-  [title, description, image, userId],
-    (err) => {
-      if (err) {
-        console.log("POST ERROR:", err);
-        return res.status(500).json(err);
-      }
+// ➕ CREATE POST (FIXED WITH IMAGE UPLOAD)
+router.post("/", upload.single("image"), (req, res) => {
+  try {
+    const { title, description, date, venue, userId } = req.body;
 
-      res.json({ message: "Post created" });
+    const image = req.file ? req.file.filename : null;
+
+    if (!title || !description || !userId) {
+      return res.status(400).json({ error: "Missing fields" });
     }
-  );
+
+    db.query(
+      "INSERT INTO volunteer_posts (title, description, image, date, venue, author_id) VALUES (?, ?, ?, ?, ?, ?)",
+      [title, description, image, date, venue, userId],
+      (err) => {
+        if (err) {
+          console.log("POST ERROR:", err);
+          return res.status(500).json(err);
+        }
+
+        res.json({ message: "Post created" });
+      }
+    );
+
+  } catch (err) {
+    console.log("POST ERROR:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
-// ❤️ LIKE POST (SAFE)
+
+// ❤️ LIKE / UNLIKE TOGGLE (ALREADY GOOD)
 router.post("/like", (req, res) => {
   const { postId, userId } = req.body;
 
   db.query(
-    "INSERT INTO likes (post_id, user_id) VALUES (?, ?)",
+    "SELECT * FROM likes WHERE post_id=? AND user_id=?",
     [postId, userId],
-    (err) => {
-      if (err) {
-        if (err.code === "ER_DUP_ENTRY") {
-          return res.json({ message: "Already liked" });
-        }
-
-        console.log("LIKE ERROR:", err);
-        return res.status(500).json(err);
+    (err, result) => {
+      if (result.length > 0) {
+        // UNLIKE
+        db.query(
+          "DELETE FROM likes WHERE post_id=? AND user_id=?",
+          [postId, userId],
+          () => res.json({ message: "Unliked" })
+        );
+      } else {
+        // LIKE
+        db.query(
+          "INSERT INTO likes (post_id, user_id) VALUES (?, ?)",
+          [postId, userId],
+          () => res.json({ message: "Liked" })
+        );
       }
-
-      res.json({ message: "Liked" });
     }
   );
 });
