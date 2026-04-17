@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Feed from "./pages/Feed";
+import Search from "./pages/Search";
 import Create from "./pages/Create";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import Users from "./pages/Users";
 import Friends from "./pages/Friends";
+
 
 export default function App() {
   return (
