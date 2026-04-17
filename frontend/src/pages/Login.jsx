@@ -14,10 +14,9 @@ export default function Login() {
         password
       });
 
-      // ✅ FIX — पूरा response store करो
       localStorage.setItem("user", JSON.stringify(res.data));
-
       nav("/feed");
+
     } catch (err) {
       console.log("Login error:", err);
       alert("Login failed");
@@ -52,6 +51,15 @@ export default function Login() {
       >
         Login
       </button>
+
+      {/* ✅ NEW */}
+      <p style={{ marginTop: 15, color: "blue", textAlign: "center" }}>
+        Forgot Password?
+      </p>
+
+      <p style={{ textAlign: "center" }}>
+        Create New Account
+      </p>
     </div>
   );
 }

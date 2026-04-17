@@ -71,42 +71,51 @@ export default function Feed() {
 
       {/* 📄 POSTS */}
       {posts.map(p => (
-        <div
-          key={p.id}
-          style={{
-            background: "#fff",
-            padding: 15,
-            marginBottom: 12,
-            borderRadius: 12,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-          }}
-        >
-          <div style={{ fontWeight: "bold", marginBottom: 5 }}>
-            {p.full_name} (@{p.username})
-          </div>
+  <div
+    key={p.id}
+    style={{
+      background: "#fff",
+      padding: 15,
+      marginBottom: 12,
+      borderRadius: 12,
+      boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+    }}
+  >
+    <div style={{ fontWeight: "bold", marginBottom: 5 }}>
+      {p.full_name} (@{p.username})
+    </div>
 
-          <h4>{p.title}</h4>
-          <p style={{ color: "#555" }}>{p.description}</p>
+    <h4>{p.title}</h4>
+    <p style={{ color: "#555" }}>{p.description}</p>
 
-          {p.image && <img src={p.image} style={{ width: "100%", borderRadius: 10 }} />}
+    {/* 🆕 DATE + VENUE */}
+    {p.date && <p>📅 {p.date}</p>}
+    {p.venue && <p>📍 {p.venue}</p>}
 
-          <button
-            disabled={loadingLike[p.id]}
-            style={{
-              background: "#ff4d4f",
-              color: "#fff",
-              border: "none",
-              padding: "6px 12px",
-              borderRadius: 8,
-              marginTop: 10
-            }}
-            onClick={() => likePost(p.id)}
-          >
-            {loadingLike[p.id] ? "..." : `❤️ ${p.likes || 0}`}
-          </button>
-        </div>
-      ))}
+    {/* 🖼 IMAGE */}
+    {p.image && (
+      <img
+        src={p.image}
+        style={{ width: "100%", borderRadius: 10, marginTop: 10 }}
+      />
+    )}
 
+    <button
+      disabled={loadingLike[p.id]}
+      style={{
+        background: "#ff4d4f",
+        color: "#fff",
+        border: "none",
+        padding: "6px 12px",
+        borderRadius: 8,
+        marginTop: 10
+      }}
+      onClick={() => likePost(p.id)}
+    >
+      {loadingLike[p.id] ? "..." : `❤️ ${p.likes || 0}`}
+    </button>
+  </div>
+))}
       <Navbar />
     </div>
   );

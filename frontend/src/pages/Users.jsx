@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"; 
 import { API } from "../api";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -7,18 +7,12 @@ import { io } from "socket.io-client";
 const socket = io("https://volunteer-backend-yu6v.onrender.com");
 
 export default function Users() {
+  const [dark, setDark] = useState(false);
   const [users, setUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const nav = useNavigate();
 
-  // ✅ SAFE USER
-  let currentUser = null;
-  try {
-    const storedUser = localStorage.getItem("user");
-    currentUser = storedUser ? JSON.parse(storedUser) : null;
-  } catch {
-    currentUser = null;
-  }
+  const currentUser = JSON.parse(localStorage.getItem("user") || "null");
 
   if (!currentUser) {
     return <h3 style={{ padding: 20 }}>Please login first</h3>;
@@ -50,7 +44,15 @@ export default function Users() {
   };
 
   return (
-    <div style={{ padding: 10, paddingBottom: 60, maxWidth: 500, margin: "auto" }}>
+    <div style={{
+      padding: 10,
+      paddingBottom: 60,
+      maxWidth: 500,
+      margin: "auto",
+      background: dark ? "#111" : "#fff",
+      color: dark ? "#fff" : "#000",
+      minHeight: "100vh"
+    }}>
       
       {/* 🔝 HEADER */}
       <div style={{
@@ -59,14 +61,16 @@ export default function Users() {
         alignItems: "center",
         marginBottom: 15
       }}>
-        <h3>Users</h3>
+        <h3>My Account</h3>
 
         <div style={{ display: "flex", gap: 10 }}>
-          {/* 🔍 SEARCH */}
           <button onClick={() => nav("/search")}>🔍</button>
-
-          {/* ⬅ BACK */}
           <button onClick={() => nav("/feed")}>⬅</button>
+
+          {/* 🌙 DARK MODE */}
+          <button onClick={() => setDark(!dark)}>
+            {dark ? "☀️" : "🌙"}
+          </button>
         </div>
       </div>
 
@@ -76,7 +80,7 @@ export default function Users() {
           key={u.id}
           onClick={() => openChat(u.id)}
           style={{
-            background: "#fff",
+            background: dark ? "#222" : "#fff",
             padding: 15,
             marginBottom: 10,
             borderRadius: 10,
