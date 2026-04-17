@@ -88,6 +88,8 @@ export default function Feed() {
           <h4>{p.title}</h4>
           <p style={{ color: "#555" }}>{p.description}</p>
 
+          {p.image && <img src={p.image} style={{ width: "100%", borderRadius: 10 }} />}
+
           <button
             disabled={loadingLike[p.id]}
             style={{

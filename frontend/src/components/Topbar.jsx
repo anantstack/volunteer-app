@@ -75,4 +75,5 @@ export default function Users() {
       <Navbar />
     </div>
   );
+  <button onClick={() => nav("/notifications")}>🔔</button>
 }

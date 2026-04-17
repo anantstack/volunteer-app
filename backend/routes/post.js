@@ -35,11 +35,11 @@ router.get("/", (req, res) => {
 
 // ➕ CREATE POST (WITH USER)
 router.post("/", (req, res) => {
-  const { title, description, userId } = req.body;
+  const { title, description, image } = req.body;
 
-  db.query(
-    "INSERT INTO volunteer_posts (title, description, author_id) VALUES (?, ?, ?)",
-    [title, description, userId],
+db.query(
+  "INSERT INTO volunteer_posts (title, description, image, author_id) VALUES (?, ?, ?, ?)",
+  [title, description, image, userId],
     (err) => {
       if (err) {
         console.log("POST ERROR:", err);

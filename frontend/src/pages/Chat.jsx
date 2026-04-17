@@ -14,6 +14,7 @@ export default function Chat() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const { id } = useParams();
   const otherUserId = id ? parseInt(id) : null;
+  const [typing, setTyping] = useState(false);
 
   // ❌ अगर user या id नहीं
   if (!user) return <h3>Please login</h3>;
@@ -70,6 +71,20 @@ export default function Chat() {
     setMessages(prev => [...prev, msg]); // instant UI
     setText("");
   };
+  // typing send
+  const handleTyping = () => {
+  socket.emit("typing", { toUser: otherUserId });
+  };
+
+  // listen typing
+  useEffect(() => {
+  socket.on("typing", () => {
+    setTyping(true);
+    setTimeout(() => setTyping(false), 2000);
+  });
+
+  return () => socket.off("typing");
+}, []);
 
   return (
     <div style={{ padding: 10, paddingBottom: 70 }}>
