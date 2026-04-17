@@ -3,13 +3,13 @@ import db from "../config/db.js";
 
 const router = express.Router();
 
-// send request
-router.post("/send", (req, res) => {
-  const { senderId, receiverId } = req.body;
+// 👉 SEND REQUEST
+router.post("/request", (req, res) => {
+  const { fromUser, toUser } = req.body;
 
   db.query(
-    "INSERT INTO friends (sender_id, receiver_id) VALUES (?, ?)",
-    [senderId, receiverId],
+    "INSERT INTO friends (from_user, to_user, status) VALUES (?, ?, 'pending')",
+    [fromUser, toUser],
     (err) => {
       if (err) return res.status(500).json(err);
       res.json({ message: "Request sent" });
@@ -17,13 +17,13 @@ router.post("/send", (req, res) => {
   );
 });
 
-// accept
+// 👉 ACCEPT REQUEST
 router.post("/accept", (req, res) => {
-  const { id } = req.body;
+  const { requestId } = req.body;
 
   db.query(
     "UPDATE friends SET status='accepted' WHERE id=?",
-    [id],
+    [requestId],
     (err) => {
       if (err) return res.status(500).json(err);
       res.json({ message: "Accepted" });
@@ -31,18 +31,19 @@ router.post("/accept", (req, res) => {
   );
 });
 
-// get friends
+// 👉 GET FRIENDS
 router.get("/:userId", (req, res) => {
   const { userId } = req.params;
 
   db.query(
     `
-    SELECT u.* FROM friends f
+    SELECT u.id, u.full_name, u.username
+    FROM friends f
     JOIN app_users u 
-    ON (u.id = f.sender_id OR u.id = f.receiver_id)
-    WHERE (f.sender_id = ? OR f.receiver_id = ?)
-    AND f.status = 'accepted'
-    AND u.id != ?
+      ON (u.id = f.from_user OR u.id = f.to_user)
+    WHERE (f.from_user = ? OR f.to_user = ?) 
+      AND f.status='accepted'
+      AND u.id != ?
     `,
     [userId, userId, userId],
     (err, result) => {
