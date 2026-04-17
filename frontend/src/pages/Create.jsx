@@ -9,9 +9,19 @@ export default function Create() {
   const [date, setDate] = useState("");
   const [venue, setVenue] = useState("");
   const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const nav = useNavigate();
+
+  const handleImage = (e) => {
+    const file = e.target.files[0];
+    setImage(file);
+
+    if (file) {
+      setPreview(URL.createObjectURL(file)); // 🔥 preview
+    }
+  };
 
   const submit = async () => {
     if (loading) return;
@@ -19,7 +29,7 @@ export default function Create() {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
 
-      if (!user || !user.id) {
+      if (!user) {
         alert("Login required");
         return;
       }
@@ -31,7 +41,6 @@ export default function Create() {
 
       setLoading(true);
 
-      // 🔥 FORM DATA (IMPORTANT)
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
@@ -46,16 +55,10 @@ export default function Create() {
 
       alert("Post created");
 
-      setTitle("");
-      setDescription("");
-      setDate("");
-      setVenue("");
-      setImage(null);
-
       nav("/feed");
 
     } catch (err) {
-      console.log("Post error:", err);
+      console.log(err);
       alert("Post failed");
     } finally {
       setLoading(false);
@@ -66,25 +69,24 @@ export default function Create() {
     <div style={{ padding: 20, paddingBottom: 60 }}>
       <h3>Create Post</h3>
 
-      <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
-      <input placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} />
+      <input placeholder="Title" onChange={e => setTitle(e.target.value)} />
+      <input placeholder="Description" onChange={e => setDescription(e.target.value)} />
 
-      <input type="date" value={date} onChange={e => setDate(e.target.value)} />
-      <input placeholder="Venue" value={venue} onChange={e => setVenue(e.target.value)} />
+      <input type="date" onChange={e => setDate(e.target.value)} />
+      <input placeholder="Venue" onChange={e => setVenue(e.target.value)} />
 
-      {/* 🖼 FILE UPLOAD */}
-      <input type="file" onChange={e => setImage(e.target.files[0])} />
+      {/* 📸 IMAGE PICK */}
+      <input type="file" accept="image/*" onChange={handleImage} />
 
-      <button
-        disabled={loading}
-        style={{
-          background: "#28a745",
-          color: "#fff",
-          width: "100%",
-          marginTop: 10
-        }}
-        onClick={submit}
-      >
+      {/* 🔥 PREVIEW */}
+      {preview && (
+        <img
+          src={preview}
+          style={{ width: "100%", marginTop: 10, borderRadius: 10 }}
+        />
+      )}
+
+      <button onClick={submit} disabled={loading}>
         {loading ? "Posting..." : "Post"}
       </button>
 

@@ -98,7 +98,15 @@ export default function Feed() {
     src={`https://volunteer-backend-yu6v.onrender.com/uploads/${p.image}`}
     style={{ width: "100%", borderRadius: 10 }}
   />
+  
 )}
+<p style={{ color: "#888" }}>
+  📅 {p.date ? new Date(p.date).toLocaleDateString() : ""}
+</p>
+
+<p style={{ color: "#888" }}>
+  📍 {p.venue}
+</p>
 
     <button
       disabled={loadingLike[p.id]}
