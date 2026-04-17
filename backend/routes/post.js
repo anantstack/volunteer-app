@@ -2,6 +2,11 @@ import express from "express";
 import db from "../config/db.js";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
+
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
 
 const router = express.Router();
 
