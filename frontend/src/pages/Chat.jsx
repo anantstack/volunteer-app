@@ -10,20 +10,20 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [conversationId, setConversationId] = useState(null);
+  const [typing, setTyping] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const { id } = useParams();
   const otherUserId = id ? parseInt(id) : null;
-  const [typing, setTyping] = useState(false);
 
-  // ❌ अगर user या id नहीं
+  // ❌ safety
   if (!user) return <h3>Please login</h3>;
   if (!otherUserId) return <h3>Select a friend to chat</h3>;
 
   // 🔥 join socket
   useEffect(() => {
     socket.emit("join", user.id);
-  }, []);
+  }, [user.id]);
 
   // 🔥 create/get conversation
   useEffect(() => {
@@ -46,18 +46,32 @@ export default function Chat() {
 
   // 🔥 receive message realtime
   useEffect(() => {
-    socket.on("receive_message", (data) => {
+    const handleReceive = (data) => {
       if (data.conversationId === conversationId) {
         setMessages(prev => [...prev, data]);
       }
-    });
+    };
 
-    return () => socket.off("receive_message");
+    socket.on("receive_message", handleReceive);
+
+    return () => socket.off("receive_message", handleReceive);
   }, [conversationId]);
+
+  // 🔥 typing listener
+  useEffect(() => {
+    const handleTyping = () => {
+      setTyping(true);
+      setTimeout(() => setTyping(false), 1500);
+    };
+
+    socket.on("typing", handleTyping);
+
+    return () => socket.off("typing", handleTyping);
+  }, []);
 
   // 🔥 send message
   const send = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || !conversationId) return;
 
     const msg = {
       conversationId,
@@ -65,26 +79,21 @@ export default function Chat() {
       body: text
     };
 
-    await API.post("/chat", msg);
-    socket.emit("send_message", msg);
+    try {
+      await API.post("/chat", msg);
+      socket.emit("send_message", msg);
 
-    setMessages(prev => [...prev, msg]); // instant UI
-    setText("");
+      setMessages(prev => [...prev, msg]);
+      setText("");
+    } catch (err) {
+      console.log("Send error:", err);
+    }
   };
-  // typing send
-  const handleTyping = () => {
-  socket.emit("typing", { toUser: otherUserId });
+
+  // 🔥 typing emit
+  const emitTyping = () => {
+    socket.emit("typing", { toUser: otherUserId });
   };
-
-  // listen typing
-  useEffect(() => {
-  socket.on("typing", () => {
-    setTyping(true);
-    setTimeout(() => setTyping(false), 2000);
-  });
-
-  return () => socket.off("typing");
-}, []);
 
   return (
     <div style={{ padding: 10, paddingBottom: 70 }}>
@@ -118,13 +127,23 @@ export default function Chat() {
             </div>
           );
         })}
+
+        {/* ✍️ typing indicator */}
+        {typing && (
+          <p style={{ fontSize: 12, color: "#777" }}>
+            typing...
+          </p>
+        )}
       </div>
 
       {/* ✍ INPUT */}
       <div style={{ display: "flex", gap: 5 }}>
         <input
           value={text}
-          onChange={e => setText(e.target.value)}
+          onChange={e => {
+            setText(e.target.value);
+            emitTyping(); // 🔥 FIXED
+          }}
           style={{
             flex: 1,
             padding: 10,
