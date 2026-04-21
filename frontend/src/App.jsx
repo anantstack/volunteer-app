@@ -13,26 +13,25 @@ import Notifications from "./pages/Notifications";
 
 export default function App() {
 
-  // 🔥 FIX: अब सही जगह पर है
   useEffect(() => {
     fetch("https://volunteer-backend-yu6v.onrender.com");
   }, []);
 
   return (
-    <div style={{
-      maxWidth: "400px",
-      margin: "auto",
-      background: "#fff",
-      minHeight: "100vh",
-      border: "1px solid #ddd",
-      borderRadius: "10px",
-      overflow: "hidden"
-    }}>
-      <BrowserRouter>
+    <BrowserRouter>
+      <div style={{
+        maxWidth: "400px",
+        margin: "auto",
+        background: "#fff",
+        minHeight: "100vh",
+        border: "1px solid #ddd",
+        borderRadius: "10px",
+        overflow: "hidden"
+      }}>
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="/search" element={<Search />} />
           <Route path="/feed" element={<Feed />} />
+          <Route path="/search" element={<Search />} />
           <Route path="/create" element={<Create />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/chat" element={<Chat />} />
@@ -41,14 +40,7 @@ export default function App() {
           <Route path="/friends" element={<Friends />} />
           <Route path="/notifications" element={<Notifications />} />
         </Routes>
-      </BrowserRouter>
-    </div>
-  );
-}          <Route path="/users" element={<Users />} />
-          <Route path="/friends" element={<Friends />} />
-          <Route path="/notifications" element={<Notifications />} />
-        </Routes>
-      </BrowserRouter>
-    </div>
+      </div>
+    </BrowserRouter>
   );
 }
