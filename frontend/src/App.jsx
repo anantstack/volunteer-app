@@ -10,6 +10,10 @@ import Users from "./pages/Users";
 import Friends from "./pages/Friends";
 import Notifications from "./pages/Notifications";
 
+
+useEffect(() => {
+  fetch("https://volunteer-backend-yu6v.onrender.com");
+}, []);
 export default function App() {
   return (
     <div style={{

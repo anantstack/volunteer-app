@@ -36,7 +36,11 @@ app.use("/api/friends", friendRoutes);
 
 // 🔥 SOCKET
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  },
+  transports: ["websocket", "polling"] // 🔥 ADD THIS
 });
 
 let users = {};
