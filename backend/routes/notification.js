@@ -5,15 +5,19 @@ const router = express.Router();
 
 // 🔔 GET notifications
 router.get("/:userId", (req, res) => {
-  const { userId } = req.params;
-
   db.query(
     "SELECT * FROM notifications WHERE user_id=? ORDER BY id DESC",
-    [userId],
-    (err, result) => {
-      if (err) return res.status(500).json(err);
-      res.json(result);
-    }
+    [req.params.userId],
+    (err, result) => res.json(result)
+  );
+});
+
+// unread count
+router.get("/unread/:userId", (req, res) => {
+  db.query(
+    "SELECT COUNT(*) as count FROM notifications WHERE user_id=?",
+    [req.params.userId],
+    (err, result) => res.json(result[0])
   );
 });
 

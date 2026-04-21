@@ -1,17 +1,24 @@
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { API } from "../api";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Navbar() {
   const nav = useNavigate();
-  const [count, setCount] = useState(0);
+  const { pathname } = useLocation();
 
-useEffect(() => {
-  API.get("/notifications/unread").then(res => {
-    setCount(res.data.count || 0);
-  });
-}, []);
-  
+  const Item = ({ to, icon }) => (
+    <button
+      onClick={() => nav(to)}
+      style={{
+        flex: 1,
+        background: "transparent",
+        border: "none",
+        fontSize: 20,
+        opacity: pathname === to ? 1 : 0.5,
+        cursor: "pointer"
+      }}
+    >
+      {icon}
+    </button>
+  );
 
   return (
     <div
@@ -19,44 +26,21 @@ useEffect(() => {
         position: "fixed",
         bottom: 0,
         width: "100%",
-        maxWidth: "400px",
+        maxWidth: 400,
         display: "flex",
-        justifyContent: "space-around",
-        padding: 12,
+        borderTop: "1px solid #eee",
         background: "#fff",
-        borderTop: "1px solid #ddd"
+        padding: 10
       }}
-      
     >
-      <div style={{ position: "relative" }}>
-  <button onClick={() => nav("/chat")}>💬</button>
+      <Item to="/feed" icon="🏠" />
+      <Item to="/create" icon="➕" />
 
-  {count > 0 && (
-    <span style={{
-      position: "absolute",
-      top: -5,
-      right: -5,
-      background: "red",
-      color: "#fff",
-      borderRadius: "50%",
-      padding: "2px 6px",
-      fontSize: 10
-    }}>
-      {count}
-    </span>
-  )}
-</div>
-      {/* 🏠 HOME */}
-      <button onClick={() => nav("/feed")}>🏠</button>
+      {/* 🔥 FIX: chat → users */}
+      <Item to="/users" icon="💬" />
 
-      {/* ➕ CREATE */}
-      <button onClick={() => nav("/create")}>➕</button>
-
-      {/* 💬 CHAT */}
-      
-      <button onClick={() => nav("/chat")}>💬</button>
-      <button onClick={() => nav("/friends")}>👥</button>
-      <button onClick={() => nav("/notifications")}>🔔</button>
+      <Item to="/friends" icon="👥" />
+      <Item to="/notifications" icon="🔔" />
     </div>
   );
 }

@@ -1,79 +1,43 @@
 import { useEffect, useState } from "react";
-import { API } from "../api";
-import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
-import { io } from "socket.io-client";
 
-const socket = io("https://volunteer-backend-yu6v.onrender.com");
-
-export default function Users() {
-  const [users, setUsers] = useState([]);
-  const [onlineUsers, setOnlineUsers] = useState([]);
-
-  const nav = useNavigate();
-
-  // ✅ SAFE USER
-  let currentUser = null;
-  try {
-    const storedUser = localStorage.getItem("user");
-    currentUser = storedUser ? JSON.parse(storedUser) : null;
-  } catch {
-    currentUser = null;
-  }
-
-  // ❌ अगर login नहीं
-  if (!currentUser) {
-    return <h3>Please login first</h3>;
-  }
+export default function Topbar({ title }) {
+  const [dark, setDark] = useState(
+    localStorage.getItem("theme") === "dark"
+  );
 
   useEffect(() => {
-    socket.emit("join", currentUser.id);
-  }, []);
+    document.body.style.background = dark ? "#0f172a" : "#f1f5f9";
+    document.body.style.color = dark ? "#fff" : "#000";
 
-  useEffect(() => {
-    API.get("/auth/users")
-      .then(res => {
-        const filtered = res.data.filter(u => u.id !== currentUser.id);
-        setUsers(filtered);
-      })
-      .catch(err => console.log("Users error:", err));
-  }, []);
-
-  useEffect(() => {
-    socket.on("online_users", (data) => {
-      setOnlineUsers(data);
-    });
-
-    return () => socket.off("online_users");
-  }, []);
-
-  const openChat = (userId) => {
-    nav("/chat/" + userId);
-  };
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  }, [dark]);
 
   return (
-    <div style={{ padding: 10, paddingBottom: 60 }}>
-      <h3>Users</h3>
+    <div
+      style={{
+        padding: 12,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        background: dark ? "#1e293b" : "#fff",
+        borderBottom: "1px solid #ddd"
+      }}
+    >
+      <h3 style={{ margin: 0 }}>{title}</h3>
 
-      {users.map(u => (
-        <div
-          key={u.id}
-          onClick={() => openChat(u.id)}
-          style={{
-            padding: 15,
-            borderBottom: "1px solid #eee",
-            cursor: "pointer"
-          }}
-        >
-          <b>
-            {u.full_name} {onlineUsers.includes(u.id) && "🟢"}
-          </b>
-          <p>@{u.username}</p>
-        </div>
-      ))}
-
-      <Navbar />
+      <button
+        onClick={() => setDark(!dark)}
+        style={{
+          border: "none",
+          background: "#2563eb",
+          color: "#fff",
+          padding: "6px 12px",
+          borderRadius: 8,
+          cursor: "pointer"
+        }}
+      >
+        {dark ? "☀️" : "🌙"}
+      </button>
     </div>
   );
-  <button onClick={() => nav("/notifications")}>🔔</button>
 }

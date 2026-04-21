@@ -4,6 +4,7 @@ import http from "http";
 import { Server } from "socket.io";
 import dotenv from "dotenv";
 import path from "path";
+import fs from "fs";
 
 import authRoutes from "./routes/auth.js";
 import postRoutes from "./routes/post.js";
@@ -24,9 +25,15 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-// 🔥 STATIC IMAGE SERVE (IMPORTANT)
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+// 🔥 VERY IMPORTANT: ensure uploads folder exists
+const uploadsPath = path.join(process.cwd(), "uploads");
 
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath);
+}
+
+// 🔥 STATIC IMAGE SERVE
+app.use("/uploads", express.static(uploadsPath));
 
 // 🔥 ROUTES
 app.use("/api/auth", authRoutes);
@@ -34,7 +41,6 @@ app.use("/api/posts", postRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/friends", friendRoutes);
-
 
 // 🔥 SOCKET
 let onlineUsers = [];
@@ -64,7 +70,6 @@ io.on("connection", (socket) => {
     io.emit("online_users", onlineUsers);
   });
 });
-
 
 // 🔥 START SERVER
 const PORT = process.env.PORT || 5000;
