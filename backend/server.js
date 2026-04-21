@@ -17,39 +17,56 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: { origin: "*" }
-});
 
-// 🔥 MIDDLEWARE
-app.use(cors());
+// ✅ CORS FIX (IMPORTANT)
+app.use(cors({
+  origin: "*",
+  credentials: true
+}));
+
 app.use(express.json());
 
-// 🔥 VERY IMPORTANT: ensure uploads folder exists
+
+// ✅ SOCKET INIT (ONLY ONCE)
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+
+// ✅ UPLOAD FOLDER
 const uploadsPath = path.join(process.cwd(), "uploads");
 
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath);
 }
 
-// 🔥 STATIC IMAGE SERVE
 app.use("/uploads", express.static(uploadsPath));
 
-// 🔥 ROUTES
+
+// ✅ ROUTES
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/friends", friendRoutes);
 
-// 🔥 SOCKET
+
+// ✅ SOCKET LOGIC
 let onlineUsers = [];
 
 io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
 
   socket.on("join", (userId) => {
     socket.userId = userId;
-    if (!onlineUsers.includes(userId)) onlineUsers.push(userId);
+
+    if (!onlineUsers.includes(userId)) {
+      onlineUsers.push(userId);
+    }
+
     io.emit("online_users", onlineUsers);
   });
 
@@ -68,9 +85,12 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     onlineUsers = onlineUsers.filter(id => id !== socket.userId);
     io.emit("online_users", onlineUsers);
+
+    console.log("User disconnected:", socket.id);
   });
 });
 
-// 🔥 START SERVER
+
+// ✅ START SERVER
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log("🚀 Server running on", PORT));
