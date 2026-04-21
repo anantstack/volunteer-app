@@ -1,6 +1,6 @@
 import express from "express";
 import db from "../config/db.js";
-import { io } from "../server.js";
+
 
 const router = express.Router();
 
@@ -8,31 +8,23 @@ const router = express.Router();
 router.post("/send", (req, res) => {
   const { fromUser, toUser } = req.body;
 
+  const io = req.app.get("io"); // 🔥 GET SOCKET
+
   db.query(
-    "SELECT * FROM friends WHERE from_user=? AND to_user=?",
+    "INSERT INTO friends (from_user, to_user, status) VALUES (?, ?, 'pending')",
     [fromUser, toUser],
-    (err, result) => {
-      if (result && result.length > 0) {
-        return res.json({ message: "Already sent" });
-      }
+    (err) => {
+      if (err) return res.status(500).json(err);
 
       db.query(
-        "INSERT INTO friends (from_user, to_user, status) VALUES (?, ?, 'pending')",
-        [fromUser, toUser],
-        (err) => {
-          if (err) return res.status(500).json(err);
-
-          db.query(
-            "INSERT INTO notifications (user_id, text) VALUES (?, ?)",
-            [toUser, "New friend request"]
-          );
-
-          // 🔥 REALTIME
-          io.to(toUser).emit("new_friend_request");
-
-          res.json({ message: "Request sent" });
-        }
+        "INSERT INTO notifications (user_id, text) VALUES (?, ?)",
+        [toUser, "New friend request"]
       );
+
+      // 🔥 REALTIME
+      io.to(toUser).emit("new_friend_request");
+
+      res.json({ message: "Request sent" });
     }
   );
 });
