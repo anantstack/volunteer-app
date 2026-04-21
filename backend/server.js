@@ -17,8 +17,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-
-// ✅ CORS FIX (IMPORTANT)
+// ✅ CORS
 app.use(cors({
   origin: "*",
   credentials: true
@@ -26,8 +25,7 @@ app.use(cors({
 
 app.use(express.json());
 
-
-// ✅ SOCKET INIT (ONLY ONCE)
+// ✅ SOCKET INIT
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -35,16 +33,15 @@ const io = new Server(server, {
   }
 });
 
+// 👉 IMPORTANT EXPORT
+export { io };
 
-// ✅ UPLOAD FOLDER
+// ✅ uploads
 const uploadsPath = path.join(process.cwd(), "uploads");
-
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath);
 }
-
 app.use("/uploads", express.static(uploadsPath));
-
 
 // ✅ ROUTES
 app.use("/api/auth", authRoutes);
@@ -53,44 +50,49 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/friends", friendRoutes);
 
-
-// ✅ SOCKET LOGIC
-let onlineUsers = [];
+// ✅ USER SOCKET MAP (🔥 IMPORTANT)
+let users = {};
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
   socket.on("join", (userId) => {
-    socket.userId = userId;
-
-    if (!onlineUsers.includes(userId)) {
-      onlineUsers.push(userId);
-    }
-
-    io.emit("online_users", onlineUsers);
+    users[userId] = socket.id;
   });
 
+  // 🔥 MESSAGE
   socket.on("send_message", (data) => {
-    io.emit("receive_message", data);
+    const target = users[data.toUser];
+    if (target) io.to(target).emit("receive_message", data);
   });
 
-  socket.on("typing", () => {
-    socket.broadcast.emit("typing");
+  // 🔥 TYPING (FIXED)
+  socket.on("typing", ({ toUser }) => {
+    const target = users[toUser];
+    if (target) io.to(target).emit("typing");
   });
 
-  socket.on("seen", () => {
-    socket.broadcast.emit("seen");
+  // 🔥 SEEN (FIXED)
+  socket.on("seen", ({ toUser }) => {
+    const target = users[toUser];
+    if (target) io.to(target).emit("seen");
+  });
+
+  // 🔥 FRIEND REQUEST REALTIME
+  socket.on("new_friend_request", ({ toUser }) => {
+    const target = users[toUser];
+    if (target) io.to(target).emit("new_friend_request");
   });
 
   socket.on("disconnect", () => {
-    onlineUsers = onlineUsers.filter(id => id !== socket.userId);
-    io.emit("online_users", onlineUsers);
-
+    for (let id in users) {
+      if (users[id] === socket.id) {
+        delete users[id];
+      }
+    }
     console.log("User disconnected:", socket.id);
   });
 });
 
-
-// ✅ START SERVER
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log("🚀 Server running on", PORT));

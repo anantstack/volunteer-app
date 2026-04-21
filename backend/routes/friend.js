@@ -1,5 +1,6 @@
 import express from "express";
 import db from "../config/db.js";
+import { io } from "../server.js";
 
 const router = express.Router();
 
@@ -7,7 +8,6 @@ const router = express.Router();
 router.post("/send", (req, res) => {
   const { fromUser, toUser } = req.body;
 
-  // 🔥 duplicate check
   db.query(
     "SELECT * FROM friends WHERE from_user=? AND to_user=?",
     [fromUser, toUser],
@@ -22,11 +22,13 @@ router.post("/send", (req, res) => {
         (err) => {
           if (err) return res.status(500).json(err);
 
-          // 🔔 notification
           db.query(
             "INSERT INTO notifications (user_id, text) VALUES (?, ?)",
             [toUser, "New friend request"]
           );
+
+          // 🔥 REALTIME
+          io.to(toUser).emit("new_friend_request");
 
           res.json({ message: "Request sent" });
         }
@@ -42,8 +44,8 @@ router.post("/accept", (req, res) => {
   db.query(
     "UPDATE friends SET status='accepted' WHERE id=?",
     [id],
-    (err) => {
-      if (err) return res.status(500).json(err);
+    () => {
+      io.emit("friend_request_accepted");
       res.json({ message: "Accepted" });
     }
   );
@@ -56,14 +58,11 @@ router.post("/reject", (req, res) => {
   db.query(
     "DELETE FROM friends WHERE id=?",
     [id],
-    (err) => {
-      if (err) return res.status(500).json(err);
-      res.json({ message: "Rejected" });
-    }
+    () => res.json({ message: "Rejected" })
   );
 });
 
-// 📄 GET REQUESTS (🔥 MAIN FIX)
+// 📄 GET
 router.get("/requests/:userId", (req, res) => {
   db.query(
     `
@@ -74,17 +73,8 @@ router.get("/requests/:userId", (req, res) => {
     `,
     [req.params.userId],
     (err, result) => {
-      if (err) {
-        console.log("REQUEST ERROR:", err);
-        return res.status(500).json([]);
-      }
-
-      // 🔥 CRITICAL FIX (तुम्हारा crash यहीं से था)
-      if (!result || !Array.isArray(result)) {
-        return res.json([]);
-      }
-
-      res.json(result);
+      if (err) return res.status(500).json([]);
+      res.json(Array.isArray(result) ? result : []);
     }
   );
 });

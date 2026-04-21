@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { API } from "../api";
 import Navbar from "../components/Navbar";
-import { io } from "socket.io-client";
+import socket from "../socket";
 import { useParams } from "react-router-dom";
-
-const socket = io("https://volunteer-backend-yu6v.onrender.com");
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
@@ -14,28 +12,21 @@ export default function Chat() {
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const { id } = useParams();
-  const otherUserId = id ? parseInt(id) : null;
+  const otherUserId = parseInt(id);
 
-  // ❌ safety
-  if (!user) return <h3>Please login</h3>;
-  if (!otherUserId) return <h3>Select a friend to chat</h3>;
+  if (!user) return <h3>Login</h3>;
 
-  // 🔥 join socket
   useEffect(() => {
     socket.emit("join", user.id);
-  }, [user.id]);
+  }, []);
 
-  // 🔥 create/get conversation
   useEffect(() => {
     API.post("/chat/conversation", {
       user1: user.id,
       user2: otherUserId
-    }).then(res => {
-      setConversationId(res.data.conversationId);
-    });
+    }).then(res => setConversationId(res.data.conversationId));
   }, [otherUserId]);
 
-  // 🔥 fetch messages
   useEffect(() => {
     if (!conversationId) return;
 
@@ -44,127 +35,66 @@ export default function Chat() {
     });
   }, [conversationId]);
 
-  // 🔥 receive message realtime
   useEffect(() => {
-    const handleReceive = (data) => {
+    socket.on("receive_message", (data) => {
       if (data.conversationId === conversationId) {
         setMessages(prev => [...prev, data]);
       }
+    });
+
+    socket.on("typing", () => {
+      setTyping(true);
+      setTimeout(() => setTyping(false), 1000);
+    });
+
+    socket.on("seen", () => {
+      console.log("Seen");
+    });
+
+    return () => {
+      socket.off("receive_message");
+      socket.off("typing");
+      socket.off("seen");
     };
-
-    socket.on("receive_message", handleReceive);
-
-    return () => socket.off("receive_message", handleReceive);
   }, [conversationId]);
 
-  // 🔥 typing listener
-  useEffect(() => {
-    const handleTyping = () => {
-      setTyping(true);
-      setTimeout(() => setTyping(false), 1500);
-    };
-
-    socket.on("typing", handleTyping);
-
-    return () => socket.off("typing", handleTyping);
-  }, []);
-
-  // 🔥 send message
   const send = async () => {
-    if (!text.trim() || !conversationId) return;
+    if (!text) return;
 
     const msg = {
       conversationId,
       senderId: user.id,
-      body: text
+      body: text,
+      toUser: otherUserId
     };
 
-    try {
-      await API.post("/chat", msg);
-      socket.emit("send_message", msg);
+    await API.post("/chat", msg);
 
-      setMessages(prev => [...prev, msg]);
-      setText("");
-    } catch (err) {
-      console.log("Send error:", err);
-    }
-  };
+    socket.emit("send_message", msg);
 
-  // 🔥 typing emit
-  const emitTyping = () => {
-    socket.emit("typing", { toUser: otherUserId });
+    setMessages(prev => [...prev, msg]);
+    setText("");
   };
 
   return (
-    <div style={{ padding: 10, paddingBottom: 70 }}>
+    <div>
       <h3>Chat</h3>
 
-      {/* 📨 MESSAGES */}
-      <div style={{ minHeight: "60vh" }}>
-        {messages.map((m, i) => {
-          const isMe =
-            m.sender_id === user.id || m.senderId === user.id;
+      {messages.map((m, i) => (
+        <div key={i}>{m.body}</div>
+      ))}
 
-          return (
-            <div
-              key={i}
-              style={{
-                textAlign: isMe ? "right" : "left",
-                marginBottom: 10
-              }}
-            >
-              <span
-                style={{
-                  display: "inline-block",
-                  background: isMe ? "#007bff" : "#eee",
-                  color: isMe ? "#fff" : "#000",
-                  padding: "8px 12px",
-                  borderRadius: 12
-                }}
-              >
-                {m.body}
-              </span>
-            </div>
-          );
-        })}
+      {typing && <p>typing...</p>}
 
-        {/* ✍️ typing indicator */}
-        {typing && (
-          <p style={{ fontSize: 12, color: "#777" }}>
-            typing...
-          </p>
-        )}
-      </div>
+      <input
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          socket.emit("typing", { toUser: otherUserId });
+        }}
+      />
 
-      {/* ✍ INPUT */}
-      <div style={{ display: "flex", gap: 5 }}>
-        <input
-          value={text}
-          onChange={e => {
-            setText(e.target.value);
-            emitTyping(); // 🔥 FIXED
-          }}
-          style={{
-            flex: 1,
-            padding: 10,
-            borderRadius: 8,
-            border: "1px solid #ccc"
-          }}
-        />
-
-        <button
-          onClick={send}
-          style={{
-            background: "#007bff",
-            color: "#fff",
-            border: "none",
-            padding: "10px 15px",
-            borderRadius: 8
-          }}
-        >
-          Send
-        </button>
-      </div>
+      <button onClick={send}>Send</button>
 
       <Navbar />
     </div>
