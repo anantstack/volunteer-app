@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API } from "../api";
 import Navbar from "../components/Navbar";
+import socket from "../socket";
 
 export default function Notifications() {
   const [data, setData] = useState([]);
@@ -9,6 +10,13 @@ export default function Notifications() {
   useEffect(() => {
     API.get("/notifications/" + user.id)
       .then(res => setData(res.data));
+
+    socket.on("new_friend_request", () => {
+      API.get("/notifications/" + user.id)
+        .then(res => setData(res.data));
+    });
+
+    return () => socket.off("new_friend_request");
   }, []);
 
   return (
@@ -16,12 +24,7 @@ export default function Notifications() {
       <h3>Notifications</h3>
 
       {data.map(n => (
-        <div key={n.id} style={{
-          background: "#fff",
-          padding: 10,
-          marginBottom: 10,
-          borderRadius: 10
-        }}>
+        <div key={n.id}>
           {n.text}
         </div>
       ))}

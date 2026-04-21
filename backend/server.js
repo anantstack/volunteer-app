@@ -17,80 +17,85 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// ✅ CORS
-app.use(cors({
-  origin: "*",
-  credentials: true
-}));
-
+app.use(cors({ origin: "*", credentials: true }));
 app.use(express.json());
 
-// ✅ SOCKET INIT
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
-
-// 👉 IMPORTANT EXPORT
-export { io };
-
-// ✅ uploads
+// ✅ uploads folder
 const uploadsPath = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath);
 }
 app.use("/uploads", express.static(uploadsPath));
 
-// ✅ ROUTES
+// ✅ routes
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/friends", friendRoutes);
 
-// ✅ USER SOCKET MAP (🔥 IMPORTANT)
+// 🔥 SOCKET
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
+
 let users = {};
+let lastSeen = {};
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
 
   socket.on("join", (userId) => {
     users[userId] = socket.id;
+
+    io.emit("user_online", userId);
   });
 
-  // 🔥 MESSAGE
   socket.on("send_message", (data) => {
     const target = users[data.toUser];
-    if (target) io.to(target).emit("receive_message", data);
+
+    if (target) {
+      io.to(target).emit("receive_message", data);
+
+      // ✔ delivered back to sender also
+      io.to(socket.id).emit("message_delivered");
+    }
   });
 
-  // 🔥 TYPING (FIXED)
   socket.on("typing", ({ toUser }) => {
     const target = users[toUser];
     if (target) io.to(target).emit("typing");
   });
 
-  // 🔥 SEEN (FIXED)
   socket.on("seen", ({ toUser }) => {
     const target = users[toUser];
-    if (target) io.to(target).emit("seen");
+    if (target) {
+      io.to(target).emit("message_seen");
+    }
   });
 
-  // 🔥 FRIEND REQUEST REALTIME
   socket.on("new_friend_request", ({ toUser }) => {
     const target = users[toUser];
     if (target) io.to(target).emit("new_friend_request");
   });
 
   socket.on("disconnect", () => {
-    for (let id in users) {
-      if (users[id] === socket.id) {
-        delete users[id];
+    let id = null;
+
+    for (let key in users) {
+      if (users[key] === socket.id) {
+        id = key;
+        delete users[key];
       }
     }
-    console.log("User disconnected:", socket.id);
+
+    if (id) {
+      lastSeen[id] = new Date();
+
+      io.emit("user_offline", {
+        userId: id,
+        lastSeen: lastSeen[id]
+      });
+    }
   });
 });
 

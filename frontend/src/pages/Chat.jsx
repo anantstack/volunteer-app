@@ -9,6 +9,7 @@ export default function Chat() {
   const [text, setText] = useState("");
   const [conversationId, setConversationId] = useState(null);
   const [typing, setTyping] = useState(false);
+  const [status, setStatus] = useState("");
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const { id } = useParams();
@@ -39,6 +40,7 @@ export default function Chat() {
     socket.on("receive_message", (data) => {
       if (data.conversationId === conversationId) {
         setMessages(prev => [...prev, data]);
+        socket.emit("seen", { toUser: otherUserId });
       }
     });
 
@@ -47,37 +49,41 @@ export default function Chat() {
       setTimeout(() => setTyping(false), 1000);
     });
 
-    socket.on("seen", () => {
-      console.log("Seen");
-    });
+    socket.on("message_delivered", () => setStatus("✔ Delivered"));
+    socket.on("message_seen", () => setStatus("✔✔ Seen"));
 
     return () => {
       socket.off("receive_message");
       socket.off("typing");
-      socket.off("seen");
+      socket.off("message_delivered");
+      socket.off("message_seen");
     };
   }, [conversationId]);
 
   const send = async () => {
-    if (!text) return;
+  if (!text) return;
 
-    const msg = {
-      conversationId,
-      senderId: user.id,
-      body: text,
-      toUser: otherUserId
-    };
-
-    await API.post("/chat", msg);
-
-    socket.emit("send_message", msg);
-
-    setMessages(prev => [...prev, msg]);
-    setText("");
+  const msg = {
+    conversationId,
+    senderId: user.id,
+    body: text,
+    toUser: otherUserId
   };
 
+  await API.post("/chat", msg);
+
+  socket.emit("send_message", msg);
+
+  // ✔ immediately set delivered
+  setStatus("✔ Sent");
+
+  setMessages(prev => [...prev, msg]);
+  setText("");
+};
+  
+
   return (
-    <div>
+    <div style={{ padding: 10 }}>
       <h3>Chat</h3>
 
       {messages.map((m, i) => (
@@ -85,6 +91,7 @@ export default function Chat() {
       ))}
 
       {typing && <p>typing...</p>}
+      <p style={{ fontSize: 12 }}>{status}</p>
 
       <input
         value={text}

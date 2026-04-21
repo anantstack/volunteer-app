@@ -22,8 +22,13 @@ export default function Friends() {
 
     socket.emit("join", user.id);
 
-    socket.on("new_friend_request", load);
-    socket.on("friend_request_accepted", load);
+    socket.on("new_friend_request", () => {
+      load();
+    });
+
+    socket.on("friend_request_accepted", () => {
+      load();
+    });
 
     return () => {
       socket.off("new_friend_request");

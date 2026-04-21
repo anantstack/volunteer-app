@@ -4,6 +4,26 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Topbar from "../components/Topbar";
 import { io } from "socket.io-client";
+import socket from "../socket";
+
+const [onlineUsers, setOnlineUsers] = useState([]);
+
+useEffect(() => {
+  socket.emit("join", currentUser.id);
+
+  socket.on("user_online", (id) => {
+    setOnlineUsers(prev => [...new Set([...prev, id])]);
+  });
+
+  socket.on("user_offline", ({ userId }) => {
+    setOnlineUsers(prev => prev.filter(i => i !== userId));
+  });
+
+  return () => {
+    socket.off("user_online");
+    socket.off("user_offline");
+  };
+}, []);
 
 const socket = io("https://volunteer-backend-yu6v.onrender.com");
 
