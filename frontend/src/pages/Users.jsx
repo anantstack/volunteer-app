@@ -3,55 +3,43 @@ import { API } from "../api";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Topbar from "../components/Topbar";
-import { io } from "socket.io-client";
 import socket from "../socket";
-
-const [onlineUsers, setOnlineUsers] = useState([]);
-
-useEffect(() => {
-  socket.emit("join", currentUser.id);
-
-  socket.on("user_online", (id) => {
-    setOnlineUsers(prev => [...new Set([...prev, id])]);
-  });
-
-  socket.on("user_offline", ({ userId }) => {
-    setOnlineUsers(prev => prev.filter(i => i !== userId));
-  });
-
-  return () => {
-    socket.off("user_online");
-    socket.off("user_offline");
-  };
-}, []);
-
-const socket = io("https://volunteer-backend-yu6v.onrender.com");
 
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
   const nav = useNavigate();
-
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+
   if (!currentUser) return <h3>Please login</h3>;
 
+  // 🔥 JOIN SOCKET + ONLINE STATUS
   useEffect(() => {
     socket.emit("join", currentUser.id);
+
+    socket.on("user_online", (id) => {
+      setOnlineUsers(prev => [...new Set([...prev, id])]);
+    });
+
+    socket.on("user_offline", ({ userId }) => {
+      setOnlineUsers(prev => prev.filter(i => i !== userId));
+    });
+
+    return () => {
+      socket.off("user_online");
+      socket.off("user_offline");
+    };
   }, []);
 
+  // 🔥 FETCH USERS
   useEffect(() => {
     API.get("/auth/users")
       .then(res => {
         const filtered = res.data.filter(u => u.id !== currentUser.id);
         setUsers(filtered);
       })
-      .catch(err => console.log(err));
-  }, []);
-
-  useEffect(() => {
-    socket.on("online_users", setOnlineUsers);
-    return () => socket.off("online_users");
+      .catch(err => console.log("Users error:", err));
   }, []);
 
   const openChat = (id) => nav("/chat/" + id);
@@ -78,7 +66,7 @@ export default function Users() {
               }}
             >
               <b>
-                {u.full_name} {onlineUsers.includes(u.id) && "🟢"}
+                {u.full_name} {onlineUsers.includes(u.id) ? "🟢" : "⚫"}
               </b>
               <div style={{ color: "#777" }}>@{u.username}</div>
             </div>
