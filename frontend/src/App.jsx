@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter as Router } from "react-router-dom";
 import Login from "./pages/Login";
 import Feed from "./pages/Feed";
 import Search from "./pages/Search";
