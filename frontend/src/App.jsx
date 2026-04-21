@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { HashRouter as Router } from "react-router-dom";
+import { useEffect } from "react";
+
 import Login from "./pages/Login";
 import Feed from "./pages/Feed";
 import Search from "./pages/Search";
@@ -10,11 +11,13 @@ import Users from "./pages/Users";
 import Friends from "./pages/Friends";
 import Notifications from "./pages/Notifications";
 
-
-useEffect(() => {
-  fetch("https://volunteer-backend-yu6v.onrender.com");
-}, []);
 export default function App() {
+
+  // 🔥 FIX: अब सही जगह पर है
+  useEffect(() => {
+    fetch("https://volunteer-backend-yu6v.onrender.com");
+  }, []);
+
   return (
     <div style={{
       maxWidth: "400px",
@@ -35,6 +38,13 @@ export default function App() {
           <Route path="/chat" element={<Chat />} />
           <Route path="/chat/:id" element={<Chat />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/friends" element={<Friends />} />
+          <Route path="/notifications" element={<Notifications />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
+  );
+}          <Route path="/users" element={<Users />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/notifications" element={<Notifications />} />
         </Routes>
