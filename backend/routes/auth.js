@@ -63,11 +63,18 @@ router.get("/users", (req, res) => {
 router.post("/register", (req, res) => {
   const { full_name, username, password, email, phone, city, state, dob } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({ message: "Missing fields" });
+  }
+
   db.query(
     "INSERT INTO app_users (full_name, username, password_hash, email, phone, city, state, dob) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     [full_name, username, password, email, phone, city, state, dob],
     (err) => {
-      if (err) return res.status(500).json(err);
+      if (err) {
+        console.log("REGISTER ERROR:", err);
+        return res.status(500).json(err);
+      }
 
       res.json({ message: "Account created" });
     }
