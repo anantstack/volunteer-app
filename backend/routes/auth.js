@@ -61,21 +61,16 @@ router.get("/users", (req, res) => {
 });
 
 router.post("/register", (req, res) => {
-  const {
-    full_name,
-    username,
-    password,
-    email,
-    phone,
-    city,
-    state,
-    dob
-  } = req.body;
+  const { full_name, username, password, email, phone, city, state, dob } = req.body;
 
   db.query(
-    "INSERT INTO app_users (full_name, username, password, email, phone, city, state, dob) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO app_users (full_name, username, password_hash, email, phone, city, state, dob) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     [full_name, username, password, email, phone, city, state, dob],
-    () => res.json({ message: "User created" })
+    (err) => {
+      if (err) return res.status(500).json(err);
+
+      res.json({ message: "Account created" });
+    }
   );
 });
 
