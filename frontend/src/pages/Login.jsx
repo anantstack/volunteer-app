@@ -54,17 +54,12 @@ export default function Login() {
       </button>
 
       {/* ✅ NEW */}
-      <p style={{ marginTop: 15, color: "blue", textAlign: "center" }}>
-        Forgot Password?
-      </p>
+     
 
-      <p style={{ textAlign: "center" }}>
-        Create New Account
+      
+      <p onClick={() => nav("/forgot")} style={{marginTop:15, color: "blue", textAlign: "center" }}>
+      Forgot Password?
       </p>
-
-      <p onClick={() => nav("/forgot")} style={{ color: "blue", textAlign: "center" }}>
-  Forgot Password?
-</p>
 
 <p onClick={() => nav("/register")} style={{ textAlign: "center" }}>
   Create New Account

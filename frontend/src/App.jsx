@@ -11,7 +11,8 @@ import Users from "./pages/Users";
 import Friends from "./pages/Friends";
 import Notifications from "./pages/Notifications";
 import ForgotPassword from "./pages/ForgotPassword";
-import Register from "./pages/Register";
+
+import { Register } from "./pages/Register";
 
 
 export default function App() {

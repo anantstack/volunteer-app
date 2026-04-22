@@ -60,25 +60,34 @@ router.get("/users", (req, res) => {
   );
 });
 
-router.post("/register", (req, res) => {
+router.post("/register", async (req, res) => {
+  console.log("REGISTER BODY:", req.body); // 👈 ADD THIS
+
   const { full_name, username, password, email, phone, city, state, dob } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: "Missing fields" });
+  if (!email || !password || !username) {
+    return res.status(400).json({ message: "Missing required fields" });
   }
 
-  db.query(
-    "INSERT INTO app_users (full_name, username, password_hash, email, phone, city, state, dob) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    [full_name, username, password, email, phone, city, state, dob],
-    (err) => {
-      if (err) {
-        console.log("REGISTER ERROR:", err);
-        return res.status(500).json(err);
-      }
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-      res.json({ message: "Account created" });
-    }
-  );
+    db.query(
+      "INSERT INTO app_users (full_name, username, password_hash, email, phone, city, state, dob) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [full_name, username, hashedPassword, email, phone, city, state, dob],
+      (err) => {
+        if (err) {
+          console.log("REGISTER ERROR:", err); // 👈 ADD THIS
+          return res.status(500).json(err);
+        }
+
+        res.json({ message: "Account created" });
+      }
+    );
+  } catch (err) {
+    console.log("HASH ERROR:", err);
+    res.status(500).json(err);
+  }
 });
 
 export default router;
