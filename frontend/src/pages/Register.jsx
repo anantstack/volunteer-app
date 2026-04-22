@@ -1,46 +1,29 @@
-import { useState } from "react";
-import { API } from "../api";
-import { useNavigate } from "react-router-dom";
+import bcrypt from "bcrypt";
 
-export default function Register() {
-  const nav = useNavigate();
+router.post("/register", async (req, res) => {
+  const { full_name, username, password, email, phone, city, state, dob } = req.body;
 
-  const [form, setForm] = useState({
-    full_name: "",
-    username: "",
-    password: "",
-    email: "",
-    phone: "",
-    city: "",
-    state: "",
-    dob: ""
-  });
+  if (!email || !password || !username) {
+    return res.status(400).json({ message: "Missing fields" });
+  }
 
-  const submit = async () => {
-    try {
-      const res = await API.post("/auth/register", form);
-      alert(res.data.message);
-      nav("/");
-    } catch (err) {
-      console.log(err);
-      alert("Register failed");
-    }
-  };
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  return (
-    <div style={{ padding: 20 }}>
-      <h3>Create Account</h3>
+    db.query(
+      "INSERT INTO app_users (full_name, username, password_hash, email, phone, city, state, dob) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [full_name, username, hashedPassword, email, phone, city, state, dob],
+      (err) => {
+        if (err) {
+          console.log("REGISTER ERROR:", err);
+          return res.status(500).json(err);
+        }
 
-      <input placeholder="Full Name" onChange={e => setForm({ ...form, full_name: e.target.value })} />
-      <input placeholder="Username" onChange={e => setForm({ ...form, username: e.target.value })} />
-      <input placeholder="Password" onChange={e => setForm({ ...form, password: e.target.value })} />
-      <input placeholder="Email" onChange={e => setForm({ ...form, email: e.target.value })} />
-      <input placeholder="Phone" onChange={e => setForm({ ...form, phone: e.target.value })} />
-      <input placeholder="City" onChange={e => setForm({ ...form, city: e.target.value })} />
-      <input placeholder="State" onChange={e => setForm({ ...form, state: e.target.value })} />
-      <input placeholder="DOB" onChange={e => setForm({ ...form, dob: e.target.value })} />
-
-      <button onClick={submit}>Register</button>
-    </div>
-  );
-}
+        res.json({ message: "Account created" });
+      }
+    );
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
