@@ -1,29 +1,46 @@
-import bcrypt from "bcrypt";
+import { useState } from "react";
+import { API } from "../api";
+import { useNavigate } from "react-router-dom";
 
-router.post("/register", async (req, res) => {
-  const { full_name, username, password, email, phone, city, state, dob } = req.body;
+export default function Register() {
+  const nav = useNavigate();
 
-  if (!email || !password || !username) {
-    return res.status(400).json({ message: "Missing fields" });
-  }
+  const [form, setForm] = useState({
+    full_name: "",
+    username: "",
+    password: "",
+    email: "",
+    phone: "",
+    city: "",
+    state: "",
+    dob: ""
+  });
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+  const submit = async () => {
+    try {
+      const res = await API.post("/auth/register", form);
+      alert(res.data.message);
+      nav("/");
+    } catch (err) {
+      console.log("ERROR:", err.response?.data || err);
+      alert(err.response?.data?.message || "Register failed ❌");
+    }
+  };
 
-    db.query(
-      "INSERT INTO app_users (full_name, username, password_hash, email, phone, city, state, dob) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [full_name, username, hashedPassword, email, phone, city, state, dob],
-      (err) => {
-        if (err) {
-          console.log("REGISTER ERROR:", err);
-          return res.status(500).json(err);
-        }
+  return (
+    <div style={{ padding: 20 }}>
+      <h3>Create Account</h3>
 
-        res.json({ message: "Account created" });
-      }
-    );
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+      <input placeholder="Full Name" onChange={e => setForm({ ...form, full_name: e.target.value })} />
+      <input placeholder="Username" onChange={e => setForm({ ...form, username: e.target.value })} />
+      <input placeholder="Password" onChange={e => setForm({ ...form, password: e.target.value })} />
+      <input placeholder="Email" onChange={e => setForm({ ...form, email: e.target.value })} />
+      <input placeholder="Phone" onChange={e => setForm({ ...form, phone: e.target.value })} />
+      <input placeholder="City" onChange={e => setForm({ ...form, city: e.target.value })} />
+      <input placeholder="State" onChange={e => setForm({ ...form, state: e.target.value })} />
+      <input placeholder="DOB" onChange={e => setForm({ ...form, dob: e.target.value })} />
+
+      <button onClick={submit}>Register</button>
+    </div>
+  );
+}
