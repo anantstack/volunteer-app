@@ -10,6 +10,9 @@ import Chat from "./pages/Chat";
 import Users from "./pages/Users";
 import Friends from "./pages/Friends";
 import Notifications from "./pages/Notifications";
+import ForgotPassword from "./pages/ForgotPassword";
+import Register from "./pages/Register";
+
 
 export default function App() {
 
@@ -39,6 +42,8 @@ export default function App() {
           <Route path="/users" element={<Users />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/forgot" element={<ForgotPassword />} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </div>
     </BrowserRouter>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { API } from "../api";
 import { useNavigate } from "react-router-dom";
 
+
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -60,6 +61,14 @@ export default function Login() {
       <p style={{ textAlign: "center" }}>
         Create New Account
       </p>
+
+      <p onClick={() => nav("/forgot")} style={{ color: "blue", textAlign: "center" }}>
+  Forgot Password?
+</p>
+
+<p onClick={() => nav("/register")} style={{ textAlign: "center" }}>
+  Create New Account
+</p>
     </div>
   );
 }

@@ -11,6 +11,8 @@ import postRoutes from "./routes/post.js";
 import chatRoutes from "./routes/chat.js";
 import notificationRoutes from "./routes/notification.js";
 import friendRoutes from "./routes/friend.js";
+import passwordRoutes from "./routes/password.js";
+
 
 dotenv.config();
 
@@ -33,6 +35,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/friends", friendRoutes);
+app.use("/api/password", passwordRoutes);
 
 // 🔥 SOCKET
 const io = new Server(server, {
