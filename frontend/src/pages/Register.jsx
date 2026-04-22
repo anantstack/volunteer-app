@@ -4,14 +4,15 @@ import { useNavigate } from "react-router-dom";
 
 export default function Register() {
   const [form, setForm] = useState({
-    full_name: "",
+    First_Name: "",
+    Last_Name: "",
     username: "",
-    password: "",
-    email: "",
-    phone: "",
-    city: "",
-    state: "",
-    dob: ""
+    Password: "",
+    Email: "",
+    Phone: "",
+    City: "",
+    State: "",
+    D_O_B: ""
   });
 
   const nav = useNavigate();

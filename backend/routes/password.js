@@ -4,16 +4,16 @@ import nodemailer from "nodemailer";
 
 const router = express.Router();
 
-// 🔥 MAIL CONFIG
+// 🔐 EMAIL SETUP
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "YOUR_EMAIL@gmail.com",
-    pass: "YOUR_APP_PASSWORD"
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASS
   }
 });
 
-// 🔥 SEND OTP
+// 👉 SEND OTP
 router.post("/send-otp", (req, res) => {
   const { email } = req.body;
 
@@ -26,9 +26,9 @@ router.post("/send-otp", (req, res) => {
       if (err) return res.status(500).json(err);
 
       transporter.sendMail({
-        from: "YOUR_EMAIL@gmail.com",
+        from: process.env.EMAIL,
         to: email,
-        subject: "OTP Verification",
+        subject: "OTP for Reset Password",
         text: `Your OTP is ${otp}`
       });
 
@@ -37,21 +37,23 @@ router.post("/send-otp", (req, res) => {
   );
 });
 
-// 🔥 VERIFY OTP + RESET
-router.post("/reset", (req, res) => {
-  const { email, otp, newPassword } = req.body;
+// 👉 RESET PASSWORD
+router.post("/reset-password", (req, res) => {
+  const { email, otp, password } = req.body;
 
   db.query(
     "SELECT * FROM app_users WHERE email=? AND otp=?",
     [email, otp],
     (err, result) => {
+      if (err) return res.status(500).json(err);
+
       if (result.length === 0) {
         return res.status(400).json({ message: "Invalid OTP" });
       }
 
       db.query(
-        "UPDATE app_users SET password=?, otp=NULL WHERE email=?",
-        [newPassword, email],
+        "UPDATE app_users SET password_hash=?, otp=NULL WHERE email=?",
+        [password, email],
         () => res.json({ message: "Password updated" })
       );
     }
