@@ -5,48 +5,51 @@ import nodemailer from "nodemailer";
 
 const router = express.Router();
 
-const otpStore = {}; // temp store
+const otpStore = {};
 
 // 📩 SEND OTP
-router.post("/send-otp", async (req, res) => {
+router.post("/send-otp", (req, res) => {
   const { email, username, phone } = req.body;
 
-  try {
-    // 🔒 UNIQUE CHECK
-    const [exists] = await db.query(
-      "SELECT * FROM app_users WHERE email=? OR username=? OR phone=?",
-      [email, username, phone]
-    );
+  db.query(
+    "SELECT * FROM app_users WHERE email=? OR username=? OR phone=?",
+    [email, username, phone],
+    async (err, result) => {
+      if (err) return res.status(500).json(err);
 
-    if (exists.length > 0) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000);
-
-    otpStore[email] = otp;
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS
+      if (result.length > 0) {
+        return res.status(400).json({
+          message: "Email / Username / Phone already exists"
+        });
       }
-    });
 
-    await transporter.sendMail({
-      from: process.env.EMAIL,
-      to: email,
-      subject: "OTP Verification",
-      text: `Your OTP is ${otp}`
-    });
+      const otp = Math.floor(100000 + Math.random() * 900000);
+      otpStore[email] = otp;
 
-    res.json({ message: "OTP sent" });
+      try {
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.EMAIL,
+            pass: process.env.EMAIL_PASS
+          }
+        });
 
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "OTP failed" });
-  }
+        await transporter.sendMail({
+          from: process.env.EMAIL,
+          to: email,
+          subject: "OTP Verification",
+          text: `Your OTP is ${otp}`
+        });
+
+        res.json({ message: "OTP sent" });
+
+      } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Email failed" });
+      }
+    }
+  );
 });
 
 
@@ -71,7 +74,7 @@ router.post("/verify-otp-register", async (req, res) => {
 
     const hash = await bcrypt.hash(password, 10);
 
-    await db.query(
+    db.query(
       `INSERT INTO app_users 
       (full_name, username, email, password_hash, phone, city, state, dob)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -83,15 +86,28 @@ router.post("/verify-otp-register", async (req, res) => {
         phone,
         city,
         state,
-        dob // ⚠️ must be YYYY-MM-DD
-      ]
+        dob // MUST: YYYY-MM-DD
+      ],
+      (err) => {
+        if (err) {
+          console.log(err);
+          return res.status(500).json({ message: "Register failed" });
+        }
+
+        delete otpStore[email];
+        res.json({ message: "Registered successfully" });
+      }
     );
 
-    delete otpStore[email];
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Register failed" });
+  }
+});
 
-    res.json({ message: "Registered successfully" });
-    
-    router.post("/update", (req, res) => {
+
+// 🔥 UPDATE USER
+router.post("/update", (req, res) => {
   const { id, phone, city, state } = req.body;
 
   db.query(
@@ -102,11 +118,6 @@ router.post("/verify-otp-register", async (req, res) => {
       res.json({ message: "Updated" });
     }
   );
-});
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Register failed" });
-  }
 });
 
 export default router;

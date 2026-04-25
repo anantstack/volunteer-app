@@ -13,7 +13,6 @@ import notificationRoutes from "./routes/notification.js";
 import friendRoutes from "./routes/friend.js";
 import passwordRoutes from "./routes/password.js";
 
-
 dotenv.config();
 
 const app = express();
@@ -22,45 +21,39 @@ const server = http.createServer(app);
 app.use(cors({ origin: "*", credentials: true }));
 app.use(express.json());
 
-// ✅ uploads folder
+// uploads
 const uploadsPath = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath);
 }
 app.use("/uploads", express.static(uploadsPath));
 
-// ✅ routes
+// routes
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/password", passwordRoutes);
-app.use("/uploads", express.static("uploads"));
 
-// 🔥 SOCKET
+// SOCKET
 const io = new Server(server, {
   cors: { origin: "*" }
 });
 
-// 🔥 IMPORTANT
 app.set("io", io);
 
 let users = {};
-let lastSeen = {};
 
 io.on("connection", (socket) => {
 
   socket.on("join", (userId) => {
-    socket.join(String(userId)); // 🔥 FIX
+    socket.join(String(userId));
     users[userId] = socket.id;
-
-    io.emit("user_online", userId);
   });
 
   socket.on("send_message", (data) => {
     const target = users[data.toUser];
-
     if (target) {
       io.to(target).emit("receive_message", data);
       io.to(socket.id).emit("message_delivered");
@@ -78,22 +71,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    let id = null;
-
-    for (let key in users) {
-      if (users[key] === socket.id) {
-        id = key;
-        delete users[key];
+    for (let id in users) {
+      if (users[id] === socket.id) {
+        delete users[id];
       }
-    }
-
-    if (id) {
-      lastSeen[id] = new Date();
-
-      io.emit("user_offline", {
-        userId: id,
-        lastSeen: lastSeen[id]
-      });
     }
   });
 });

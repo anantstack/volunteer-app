@@ -9,24 +9,33 @@ router.post("/send", (req, res) => {
 
   const io = req.app.get("io");
 
+  // 🔒 prevent duplicate
   db.query(
-    "INSERT INTO friends (from_user, to_user, status) VALUES (?, ?, 'pending')",
+    "SELECT * FROM friends WHERE from_user=? AND to_user=?",
     [fromUser, toUser],
-    (err) => {
-      if (err) return res.status(500).json(err);
-
-      // 🔔 notification
-      db.query(
-        "INSERT INTO notifications (user_id, text) VALUES (?, ?)",
-        [toUser, "New friend request"]
-      );
-
-      // 🔥 realtime
-      if (io) {
-        io.to(toUser).emit("new_friend_request");
+    (err, exist) => {
+      if (exist.length > 0) {
+        return res.json({ message: "Already requested" });
       }
 
-      res.json({ message: "Request sent" });
+      db.query(
+        "INSERT INTO friends (from_user, to_user, status) VALUES (?, ?, 'pending')",
+        [fromUser, toUser],
+        (err) => {
+          if (err) return res.status(500).json(err);
+
+          db.query(
+            "INSERT INTO notifications (user_id, text) VALUES (?, ?)",
+            [toUser, "New friend request"]
+          );
+
+          if (io) {
+            io.to(String(toUser)).emit("new_friend_request");
+          }
+
+          res.json({ message: "Request sent" });
+        }
+      );
     }
   );
 });
@@ -35,18 +44,11 @@ router.post("/send", (req, res) => {
 router.post("/accept", (req, res) => {
   const { id } = req.body;
 
-  const io = req.app.get("io");
-
   db.query(
     "UPDATE friends SET status='accepted' WHERE id=?",
     [id],
     (err) => {
       if (err) return res.status(500).json(err);
-
-      if (io) {
-        io.emit("friend_request_accepted");
-      }
-
       res.json({ message: "Accepted" });
     }
   );
@@ -80,17 +82,13 @@ router.get("/requests/:userId", (req, res) => {
     `,
     [userId],
     (err, result) => {
-      if (err) {
-        console.log("REQUEST ERROR:", err);
-        return res.status(500).json([]);
-      }
-
-      res.json(result || []);
+      if (err) return res.status(500).json([]);
+      res.json(result);
     }
   );
 });
 
-// 📄 GET FRIENDS LIST
+// 📄 FRIEND LIST
 router.get("/:userId", (req, res) => {
   const userId = req.params.userId;
 
@@ -101,17 +99,14 @@ router.get("/:userId", (req, res) => {
         WHEN f.from_user = ? THEN u2.id
         ELSE u1.id
       END AS id,
-
       CASE 
         WHEN f.from_user = ? THEN u2.full_name
         ELSE u1.full_name
       END AS full_name,
-
       CASE 
         WHEN f.from_user = ? THEN u2.username
         ELSE u1.username
       END AS username
-
     FROM friends f
     JOIN app_users u1 ON u1.id = f.from_user
     JOIN app_users u2 ON u2.id = f.to_user
