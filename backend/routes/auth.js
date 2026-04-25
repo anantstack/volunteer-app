@@ -120,4 +120,37 @@ router.post("/update", (req, res) => {
   );
 });
 
+// 🔐 LOGIN
+router.post("/login", (req, res) => {
+  const { email, password } = req.body;
+
+  db.query(
+    "SELECT * FROM app_users WHERE email=?",
+    [email],
+    async (err, result) => {
+      if (err) return res.status(500).json(err);
+
+      if (result.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const user = result[0];
+
+      const match = await bcrypt.compare(password, user.password_hash);
+
+      if (!match) {
+        return res.status(400).json({ message: "Wrong password" });
+      }
+
+      res.json({
+        id: user.id,
+        full_name: user.full_name,
+        username: user.username,
+        email: user.email,
+        city: user.city
+      });
+    }
+  );
+});
+
 export default router;
