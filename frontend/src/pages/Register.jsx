@@ -38,7 +38,7 @@ export default function Register() {
       <input placeholder="Phone" onChange={e => setForm({ ...form, phone: e.target.value })} />
       <input placeholder="City" onChange={e => setForm({ ...form, city: e.target.value })} />
       <input placeholder="State" onChange={e => setForm({ ...form, state: e.target.value })} />
-      <input placeholder="DOB" onChange={e => setForm({ ...form, dob: e.target.value })} />
+      <input type="date" onChange={e => setForm({ ...form, dob: e.target.value })} />
 
       <button onClick={submit}>Register</button>
     </div>
