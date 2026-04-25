@@ -23,17 +23,17 @@ export default function Register() {
       nav("/");
     } catch (err) {
       console.log("ERROR:", err.response?.data || err);
-      alert(err.response?.data?.message || "Register failed ❌");
+      alert(err.response?.data?.message || "Register failed");
     }
   };
 
   return (
     <div style={{ padding: 20 }}>
-      <h3>Create Account</h3>
+      <h2>Create Account</h2>
 
       <input placeholder="Full Name" onChange={e => setForm({ ...form, full_name: e.target.value })} />
       <input placeholder="Username" onChange={e => setForm({ ...form, username: e.target.value })} />
-      <input placeholder="Password" onChange={e => setForm({ ...form, password: e.target.value })} />
+      <input placeholder="Password" type="password" onChange={e => setForm({ ...form, password: e.target.value })} />
       <input placeholder="Email" onChange={e => setForm({ ...form, email: e.target.value })} />
       <input placeholder="Phone" onChange={e => setForm({ ...form, phone: e.target.value })} />
       <input placeholder="City" onChange={e => setForm({ ...form, city: e.target.value })} />
