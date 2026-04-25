@@ -52,6 +52,7 @@ let lastSeen = {};
 io.on("connection", (socket) => {
 
   socket.on("join", (userId) => {
+    socket.join(String(userId)); // 🔥 FIX
     users[userId] = socket.id;
 
     io.emit("user_online", userId);
@@ -62,8 +63,6 @@ io.on("connection", (socket) => {
 
     if (target) {
       io.to(target).emit("receive_message", data);
-
-      // ✔ delivered back to sender also
       io.to(socket.id).emit("message_delivered");
     }
   });
@@ -75,14 +74,7 @@ io.on("connection", (socket) => {
 
   socket.on("seen", ({ toUser }) => {
     const target = users[toUser];
-    if (target) {
-      io.to(target).emit("message_seen");
-    }
-  });
-
-  socket.on("new_friend_request", ({ toUser }) => {
-    const target = users[toUser];
-    if (target) io.to(target).emit("new_friend_request");
+    if (target) io.to(target).emit("message_seen");
   });
 
   socket.on("disconnect", () => {
