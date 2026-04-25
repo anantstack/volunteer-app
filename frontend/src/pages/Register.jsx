@@ -1,46 +1,66 @@
 import { useState } from "react";
 import { API } from "../api";
-import { useNavigate } from "react-router-dom";
 
 export default function Register() {
-  const nav = useNavigate();
+  const [form, setForm] = useState({});
+  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState(1);
 
-  const [form, setForm] = useState({
-    full_name: "",
-    username: "",
-    password: "",
-    email: "",
-    phone: "",
-    city: "",
-    state: "",
-    dob: ""
-  });
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  const submit = async () => {
+  const sendOtp = async () => {
     try {
-      const res = await API.post("/auth/register", form);
-      alert(res.data.message);
-      nav("/");
+      await API.post("/auth/send-otp", form);
+      alert("OTP sent");
+      setStep(2);
     } catch (err) {
-      console.log("ERROR:", err.response?.data || err);
-      alert(err.response?.data?.message || "Register failed");
+      alert(err.response?.data?.message || "Error");
+    }
+  };
+
+  const register = async () => {
+    try {
+      const dobFormatted = form.dob.split("-").reverse().join("-"); // fix
+
+      await API.post("/auth/verify-otp-register", {
+        ...form,
+        dob: dobFormatted,
+        otp
+      });
+
+      alert("Registered ✅");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed");
     }
   };
 
   return (
-    <div style={{ padding: 20 }}>
+    <div>
       <h2>Create Account</h2>
 
-      <input placeholder="Full Name" onChange={e => setForm({ ...form, full_name: e.target.value })} />
-      <input placeholder="Username" onChange={e => setForm({ ...form, username: e.target.value })} />
-      <input placeholder="Password" type="password" onChange={e => setForm({ ...form, password: e.target.value })} />
-      <input placeholder="Email" onChange={e => setForm({ ...form, email: e.target.value })} />
-      <input placeholder="Phone" onChange={e => setForm({ ...form, phone: e.target.value })} />
-      <input placeholder="City" onChange={e => setForm({ ...form, city: e.target.value })} />
-      <input placeholder="State" onChange={e => setForm({ ...form, state: e.target.value })} />
-      <input type="date" onChange={e => setForm({ ...form, dob: e.target.value })} />
+      <input name="full_name" placeholder="Full Name" onChange={handleChange} />
+      <input name="username" placeholder="Username" onChange={handleChange} />
+      <input name="email" placeholder="Email" onChange={handleChange} />
+      <input name="password" placeholder="Password" onChange={handleChange} />
+      <input name="phone" placeholder="Phone" onChange={handleChange} />
+      <input name="city" placeholder="City" onChange={handleChange} />
+      <input name="state" placeholder="State" onChange={handleChange} />
+      <input name="dob" type="date" onChange={handleChange} />
 
-      <button onClick={submit}>Register</button>
+      {step === 1 && <button onClick={sendOtp}>Send OTP</button>}
+
+      {step === 2 && (
+        <>
+          <input
+            placeholder="Enter OTP"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+          />
+          <button onClick={register}>Register</button>
+        </>
+      )}
     </div>
   );
 }

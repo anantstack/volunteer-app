@@ -9,7 +9,7 @@ export default function Feed() {
   const fetchPosts = () => {
     API.get("/posts")
       .then(res => setPosts(res.data))
-      .catch(err => console.log(err));
+      .catch(err => console.log("Feed error:", err));
   };
 
   useEffect(() => {
@@ -20,62 +20,95 @@ export default function Feed() {
     const user = JSON.parse(localStorage.getItem("user") || "null");
     if (!user) return alert("Login required");
 
-    await API.post("/posts/like", {
-      postId: id,
-      userId: user.id
-    });
-
-    fetchPosts();
+    try {
+      await API.post("/posts/like", {
+        postId: id,
+        userId: user.id
+      });
+      fetchPosts();
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
-    <div style={{ paddingBottom: 70 }}>
+    <div style={{ paddingBottom: 70, background: "#f5f5f5", minHeight: "100vh" }}>
       <Topbar title="Feed" />
 
-      <div style={{ padding: 12 }}>
-        {posts.map(p => (
-          <div
-            key={p.id}
-            style={{
-              background: "#fff",
-              padding: 14,
-              marginBottom: 12,
-              borderRadius: 16,
-              border: "1px solid #eee"
-            }}
-          >
-            <div style={{ fontWeight: 600 }}>
-              {p.full_name} (@{p.username})
-            </div>
+      <div style={{ padding: 10 }}>
+        {posts.length === 0 ? (
+          <p>No posts yet</p>
+        ) : (
+          posts.map(p => (
+            <div
+              key={p.id}
+              style={{
+                background: "#fff",
+                marginBottom: 16,
+                borderRadius: 12,
+                overflow: "hidden",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.05)"
+              }}
+            >
+              {/* 🔹 USER HEADER */}
+              <div style={{ padding: 12, fontWeight: 600 }}>
+                {p.full_name} (@{p.username})
+              </div>
 
-            <h4>{p.title}</h4>
-            <p style={{ color: "#555" }}>{p.description}</p>
+              {/* 🔹 IMAGE */}
+              {p.image && (
+                <img
+                  src={`https://volunteer-backend-yu6v.onrender.com/uploads/${p.image}`}
+                  alt="post"
+                  style={{
+                    width: "100%",
+                    height: 300,
+                    objectFit: "cover"
+                  }}
+                />
+              )}
 
-            {/* ✅ IMAGE */}
-            {p.image && (
-              <img
-                src={`https://volunteer-backend-yu6v.onrender.com/uploads/${p.image}`}
+              {/* 🔹 ACTION BUTTONS */}
+              <div
                 style={{
-                  width: "100%",
-                  borderRadius: 12,
-                  marginTop: 8
+                  display: "flex",
+                  justifyContent: "space-around",
+                  padding: "10px 0",
+                  fontSize: 18
                 }}
-              />
-            )}
+              >
+                <span
+                  onClick={() => likePost(p.id)}
+                  style={{ cursor: "pointer" }}
+                >
+                  ❤️ {p.likes || 0}
+                </span>
 
-            {/* ✅ CLEAN DATE */}
-            <div style={{ color: "#888", fontSize: 12 }}>
-              {p.date && `📅 ${new Date(p.date).toLocaleDateString()}`}
-              {p.venue && ` • 📍 ${p.venue}`}
-            </div>
+                <span style={{ cursor: "pointer" }}>
+                  💬 Comment
+                </span>
 
-            <div style={{ marginTop: 10 }}>
-              <button onClick={() => likePost(p.id)}>
-                ❤️ {p.likes || 0}
-              </button>
+                <span style={{ cursor: "pointer" }}>
+                  📤 Share
+                </span>
+              </div>
+
+              {/* 🔹 CONTENT */}
+              <div style={{ padding: "0 12px 10px" }}>
+                <h4 style={{ margin: "5px 0" }}>{p.title}</h4>
+                <p style={{ color: "#555", margin: "5px 0" }}>
+                  {p.description}
+                </p>
+
+                {/* 🔹 DATE + LOCATION */}
+                <div style={{ color: "#888", fontSize: 12 }}>
+                  {p.date && `📅 ${new Date(p.date).toLocaleDateString()}`}
+                  {p.venue && ` • 📍 ${p.venue}`}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       <Navbar />

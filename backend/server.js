@@ -36,6 +36,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/password", passwordRoutes);
+app.use("/uploads", express.static("uploads"));
 
 // 🔥 SOCKET
 const io = new Server(server, {

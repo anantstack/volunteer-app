@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { API } from "../api";
 import Navbar from "../components/Navbar";
 import socket from "../socket";
@@ -9,7 +9,8 @@ export default function Chat() {
   const [text, setText] = useState("");
   const [conversationId, setConversationId] = useState(null);
   const [typing, setTyping] = useState(false);
-  const [status, setStatus] = useState("");
+
+  const bottomRef = useRef();
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const { id } = useParams();
@@ -17,10 +18,12 @@ export default function Chat() {
 
   if (!user) return <h3>Login</h3>;
 
+  // 🔹 JOIN SOCKET
   useEffect(() => {
     socket.emit("join", user.id);
   }, []);
 
+  // 🔹 GET/CREATE CONVERSATION
   useEffect(() => {
     API.post("/chat/conversation", {
       user1: user.id,
@@ -28,6 +31,7 @@ export default function Chat() {
     }).then(res => setConversationId(res.data.conversationId));
   }, [otherUserId]);
 
+  // 🔹 LOAD MESSAGES
   useEffect(() => {
     if (!conversationId) return;
 
@@ -36,11 +40,11 @@ export default function Chat() {
     });
   }, [conversationId]);
 
+  // 🔹 SOCKET LISTEN
   useEffect(() => {
     socket.on("receive_message", (data) => {
       if (data.conversationId === conversationId) {
         setMessages(prev => [...prev, data]);
-        socket.emit("seen", { toUser: otherUserId });
       }
     });
 
@@ -49,59 +53,103 @@ export default function Chat() {
       setTimeout(() => setTyping(false), 1000);
     });
 
-    socket.on("message_delivered", () => setStatus("✔ Delivered"));
-    socket.on("message_seen", () => setStatus("✔✔ Seen"));
-
     return () => {
       socket.off("receive_message");
       socket.off("typing");
-      socket.off("message_delivered");
-      socket.off("message_seen");
     };
   }, [conversationId]);
 
-  const send = async () => {
-  if (!text) return;
+  // 🔹 AUTO SCROLL
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  const msg = {
-    conversationId,
-    senderId: user.id,
-    body: text,
-    toUser: otherUserId
+  // 🔹 SEND MESSAGE
+  const send = async () => {
+    if (!text.trim()) return;
+
+    const msg = {
+      conversationId,
+      senderId: user.id,
+      body: text,
+      toUser: otherUserId
+    };
+
+    await API.post("/chat", msg);
+    socket.emit("send_message", msg);
+
+    setMessages(prev => [...prev, msg]);
+    setText("");
   };
 
-  await API.post("/chat", msg);
-
-  socket.emit("send_message", msg);
-
-  // ✔ immediately set delivered
-  setStatus("✔ Sent");
-
-  setMessages(prev => [...prev, msg]);
-  setText("");
-};
-  
-
   return (
-    <div style={{ padding: 10 }}>
+    <div style={{ padding: 10, paddingBottom: 70 }}>
       <h3>Chat</h3>
 
-      {messages.map((m, i) => (
-        <div key={i}>{m.body}</div>
-      ))}
+      {/* 🔹 MESSAGES */}
+      <div style={{ minHeight: "65vh" }}>
+        {messages.map((m, i) => {
+          const isMe =
+            m.sender_id === user.id || m.senderId === user.id;
 
-      {typing && <p>typing...</p>}
-      <p style={{ fontSize: 12 }}>{status}</p>
+          return (
+            <div
+              key={i}
+              style={{
+                textAlign: isMe ? "right" : "left",
+                marginBottom: 10
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  background: isMe ? "#007bff" : "#eee",
+                  color: isMe ? "#fff" : "#000",
+                  padding: "8px 12px",
+                  borderRadius: 12,
+                  maxWidth: "70%"
+                }}
+              >
+                {m.body}
+              </span>
+            </div>
+          );
+        })}
 
-      <input
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value);
-          socket.emit("typing", { toUser: otherUserId });
-        }}
-      />
+        {typing && <p style={{ fontSize: 12 }}>Typing...</p>}
 
-      <button onClick={send}>Send</button>
+        <div ref={bottomRef} />
+      </div>
+
+      {/* 🔹 INPUT */}
+      <div style={{ display: "flex", gap: 5 }}>
+        <input
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            socket.emit("typing", { toUser: otherUserId });
+          }}
+          style={{
+            flex: 1,
+            padding: 10,
+            borderRadius: 8,
+            border: "1px solid #ccc"
+          }}
+        />
+
+        <button
+          onClick={send}
+          style={{
+            background: "#007bff",
+            color: "#fff",
+            border: "none",
+            padding: "10px 15px",
+            borderRadius: 8
+          }}
+        >
+          Send
+        </button>
+      </div>
 
       <Navbar />
     </div>
