@@ -1,8 +1,11 @@
+import express from "express";
+import db from "../config/db.js";
 import bcrypt from "bcrypt";
 
-router.post("/register", async (req, res) => {
-  console.log("BODY:", req.body);
+const router = express.Router();
 
+// REGISTER
+router.post("/register", async (req, res) => {
   const { full_name, username, password, email, phone, city, state, dob } = req.body;
 
   if (!username || !email || !password) {
@@ -10,7 +13,6 @@ router.post("/register", async (req, res) => {
   }
 
   try {
-    // 🔥 DUPLICATE CHECK
     db.query(
       "SELECT * FROM app_users WHERE username=? OR email=?",
       [username, email],
@@ -28,18 +30,19 @@ router.post("/register", async (req, res) => {
           [full_name, username, email, hashedPassword, phone, city, state, dob],
           (err) => {
             if (err) {
-              console.log("SQL ERROR:", err);
+              console.log(err);
               return res.status(500).json(err);
             }
 
-            res.json({ message: "Account created successfully" });
+            res.json({ message: "Account created" });
           }
         );
       }
     );
-
   } catch (err) {
-    console.log("SERVER ERROR:", err);
+    console.log(err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
+export default router;
