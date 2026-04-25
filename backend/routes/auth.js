@@ -75,4 +75,19 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// GET ALL USERS
+router.get("/users", (req, res) => {
+  db.query(
+    "SELECT id, full_name, username FROM app_users",
+    (err, result) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json(err);
+      }
+
+      res.json(result);
+    }
+  );
+});
+
 export default router;
